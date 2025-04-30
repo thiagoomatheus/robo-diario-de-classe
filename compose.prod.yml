@@ -1,0 +1,156 @@
+version: '3.9'
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        - DATABASE_URL: postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=public
+    ports:
+      - "3333:3333"
+    environment:
+      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=public
+      - JWT_SECRET=${JWT_SECRET_PROD}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN_PROD}
+      - NODE_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY_PROD}
+      - API_KEY=${API_KEY_PROD}
+    depends_on:
+      - postgres
+    
+  typebot_builder:
+    image: 'baptistearno/typebot-builder:latest'
+    depends_on:
+      - postgres
+      - minio
+    environment:
+      - SERVICE_FQDN_MANAGER
+      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}
+      - ENCRYPTION_SECRET=$SERVICE_BASE64_32_SECRET
+      - DEFAULT_WORKSPACE_PLAN=UNLIMITED
+      - NEXTAUTH_URL=$SERVICE_FQDN_MANAGER
+      - NEXT_PUBLIC_VIEWER_URL=$SERVICE_FQDN_CHAT
+      - NEXTAUTH_URL_INTERNAL=http://localhost:3000
+      - DISABLE_SIGNUP=false
+      - S3_ACCESS_KEY=$SERVICE_USER_MINIO
+      - S3_SECRET_KEY=$SERVICE_PASSWORD_MINIO
+      - S3_BUCKET=typebot
+      - MINIO_SERVER_URL
+
+        #SMTP
+      - ADMIN_EMAIL=electroneumthiago01@gmail.com
+      - NEXT_PUBLIC_SMTP_FROM='Suporte' <electroneumthiago01@gmail.com>
+      - SMTP_USERNAME=electroneumthiago01@gmail.com
+      - SMTP_PASSWORD=lwfkwfcfhzqjwdao
+
+      - SMTP_AUTH_DISABLED=false
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=465
+      - SMTP_SECURE=true
+
+        #Google 
+      - GOOGLE_CLIENT_ID=000
+      - GOOGLE_CLIENT_SECRET=000
+      - NEXT_PUBLIC_GOOGLE_API_KEY=000
+
+    entrypoint: >
+      sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
+
+  typebot_viewer:
+    image: 'baptistearno/typebot-viewer:latest'
+    depends_on:
+      - postgres
+      - minio
+    environment:
+      - SERVICE_FQDN_CHAT
+      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}
+      - ENCRYPTION_SECRET=$SERVICE_BASE64_32_SECRET
+      - DEFAULT_WORKSPACE_PLAN=UNLIMITED
+      - NEXTAUTH_URL=$SERVICE_FQDN_MANAGER
+      - NEXT_PUBLIC_VIEWER_URL=$SERVICE_FQDN_CHAT
+      - NEXTAUTH_URL_INTERNAL=http://localhost:3000
+      - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+      - NEXT_PUBLIC_GOOGLE_API_KEY=$NEXT_PUBLIC_GOOGLE_API_KEY
+      - S3_ACCESS_KEY=$SERVICE_USER_MINIO
+      - S3_SECRET_KEY=$SERVICE_PASSWORD_MINIO
+      - S3_BUCKET=typebot
+      - MINIO_SERVER_URL
+    entrypoint: >
+      sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
+
+  postgres:
+    image: 'postgres:16-alpine'
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-postgres}
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_USER=${SERVICE_USER_POSTGRES}
+      - DB_POSTGRESDB_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - POSTGRES_USER=${SERVICE_USER_POSTGRES}
+      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: 'quay.io/minio/minio:latest'
+    command: 'server /data --console-address ":9001"'
+    environment:
+      - MINIO_SERVER_URL=$MINIO_SERVER_URL
+      - MINIO_BROWSER_REDIRECT_URL=$MINIO_BROWSER_REDIRECT_URL
+      - MINIO_ROOT_USER=$SERVICE_USER_MINIO
+      - MINIO_ROOT_PASSWORD=$SERVICE_PASSWORD_MINIO
+    volumes:
+      - 'minio-data:/data'
+    healthcheck:
+      test:
+        - CMD
+        - mc
+        - ready
+        - local
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  minio-createbucket:
+    image: minio/mc
+    restart: 'no'
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+        /bin/sh -c "
+        sleep 10;
+        /usr/bin/mc config host add minio http://minio:9000 ${SERVICE_USER_MINIO} ${SERVICE_PASSWORD_MINIO};
+        /usr/bin/mc mb minio/typebot;
+        /usr/bin/mc anonymous set public minio/typebot/public;
+        exit 0;
+        "
+
+  evolution-api:
+    container_name: evolution_api
+    image: atendai/evolution-api:v2.1.1
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - evolution_instances:/evolution/instances
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    command: >
+      redis-server --port 6379 --appendonly yes
+    volumes:
+      - evolution_redis:/data
+    ports:
+      - 6379:6379

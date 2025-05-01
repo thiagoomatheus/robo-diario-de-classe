@@ -1,24 +1,6 @@
 version: '3.9'
 services:
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-      args:
-        - DATABASE_URL: postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=public
-    ports:
-      - "3333:3333"
-    environment:
-      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=public
-      - JWT_SECRET=${JWT_SECRET_PROD}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN_PROD}
-      - NODE_ENV=production
-      - GEMINI_API_KEY=${GEMINI_API_KEY_PROD}
-      - API_KEY=${API_KEY_PROD}
-    depends_on:
-      - postgres
-    
+  # Typebot Builder Service
   typebot_builder:
     image: 'baptistearno/typebot-builder:latest'
     depends_on:
@@ -26,37 +8,21 @@ services:
       - minio
     environment:
       - SERVICE_FQDN_MANAGER
-      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}
+      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme
       - ENCRYPTION_SECRET=$SERVICE_BASE64_32_SECRET
       - DEFAULT_WORKSPACE_PLAN=UNLIMITED
       - NEXTAUTH_URL=$SERVICE_FQDN_MANAGER
       - NEXT_PUBLIC_VIEWER_URL=$SERVICE_FQDN_CHAT
       - NEXTAUTH_URL_INTERNAL=http://localhost:3000
       - DISABLE_SIGNUP=false
-      - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
-      - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
+      - S3_ACCESS_KEY=$SERVICE_USER_MINIO
+      - S3_SECRET_KEY=$SERVICE_PASSWORD_MINIO
       - S3_BUCKET=typebot
       - MINIO_SERVER_URL
-
-        #SMTP
-      - ADMIN_EMAIL=electroneumthiago01@gmail.com
-      - NEXT_PUBLIC_SMTP_FROM='Suporte' <electroneumthiago01@gmail.com>
-      - SMTP_USERNAME=electroneumthiago01@gmail.com
-      - SMTP_PASSWORD=lwfkwfcfhzqjwdao
-
-      - SMTP_AUTH_DISABLED=false
-      - SMTP_HOST=smtp.gmail.com
-      - SMTP_PORT=465
-      - SMTP_SECURE=true
-
-        #Google 
-      - GOOGLE_CLIENT_ID=000
-      - GOOGLE_CLIENT_SECRET=000
-      - NEXT_PUBLIC_GOOGLE_API_KEY=000
-
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
 
+  # Typebot Viewer Service
   typebot_viewer:
     image: 'baptistearno/typebot-viewer:latest'
     depends_on:
@@ -64,7 +30,7 @@ services:
       - minio
     environment:
       - SERVICE_FQDN_CHAT
-      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}
+      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme
       - ENCRYPTION_SECRET=$SERVICE_BASE64_32_SECRET
       - DEFAULT_WORKSPACE_PLAN=UNLIMITED
       - NEXTAUTH_URL=$SERVICE_FQDN_MANAGER
@@ -80,22 +46,55 @@ services:
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
 
-  postgres:
-    image: 'postgres:16-alpine'
+  # Evolution API Service
+  evolution-api:
+    container_name: evolution_api
+    image: atendai/evolution-api:v2.1.1
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - evolution_instances:/evolution/instances
     environment:
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-postgres}
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_USER=${SERVICE_USER_POSTGRES}
-      - DB_POSTGRESDB_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - evolution-net
+
+  # Redis Service
+  redis:
+    image: redis:latest
+    networks:
+      - evolution-net
+    container_name: redis
+    command: >
+      redis-server --port 6379 --appendonly yes
+    volumes:
+      - evolution_redis:/data
+    ports:
+      - 6379:6379
+
+  # Postgres Service
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    command: ["postgres", "-c", "max_connections=1000", "-c", "listen_addresses=*"]
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
       - POSTGRES_USER=${SERVICE_USER_POSTGRES}
       - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
-    restart: always
+      - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    expose:
+      - 5432
 
+  # MinIO Service
   minio:
     image: 'quay.io/minio/minio:latest'
     command: 'server /data --console-address ":9001"'
@@ -116,6 +115,7 @@ services:
       timeout: 20s
       retries: 10
 
+  # MinIO Create Bucket Service
   minio-createbucket:
     image: minio/mc
     restart: 'no'
@@ -130,27 +130,31 @@ services:
         /usr/bin/mc anonymous set public minio/typebot/public;
         exit 0;
         "
+  api:
+  build:
+    context: .
+    dockerfile: Dockerfile.prod
+    args:
+      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=api_scheme
+  ports:
+    - "3333:3333"
+  environment:
+    - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=api_scheme
+    - JWT_SECRET=${SERVICE_JWT_SECRET_PROD}
+    - JWT_EXPIRES_IN=${SERVICE_JWT_EXPIRES_IN_PROD}
+    - NODE_ENV=production
+    - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD}
+    - API_KEY=${SERVICE_API_KEY_PROD}
+  depends_on:
+    - postgres
 
-  evolution-api:
-    container_name: evolution_api
-    image: atendai/evolution-api:v2.1.1
-    restart: always
-    depends_on:
-      - redis
-      - postgres
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    volumes:
-      - evolution_instances:/evolution/instances
+volumes:
+  evolution_instances:
+  evolution_redis:
+  postgres_data:
+  minio-data:
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    command: >
-      redis-server --port 6379 --appendonly yes
-    volumes:
-      - evolution_redis:/data
-    ports:
-      - 6379:6379
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge

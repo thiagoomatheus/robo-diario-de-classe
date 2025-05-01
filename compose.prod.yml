@@ -131,22 +131,22 @@ services:
         exit 0;
         "
   api:
-  build:
-    context: .
-    dockerfile: Dockerfile.prod
-    args:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=api_scheme
+    ports:
+      - "3333:3333"
+    environment:
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=api_scheme
-  ports:
-    - "3333:3333"
-  environment:
-    - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=api_scheme
-    - JWT_SECRET=${SERVICE_JWT_SECRET_PROD}
-    - JWT_EXPIRES_IN=${SERVICE_JWT_EXPIRES_IN_PROD}
-    - NODE_ENV=production
-    - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD}
-    - API_KEY=${SERVICE_API_KEY_PROD}
-  depends_on:
-    - postgres
+      - JWT_SECRET=${SERVICE_JWT_SECRET_PROD}
+      - JWT_EXPIRES_IN=${SERVICE_JWT_EXPIRES_IN_PROD}
+      - NODE_ENV=production
+      - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD}
+      - API_KEY=${SERVICE_API_KEY_PROD}
+    depends_on:
+      - postgres
 
 volumes:
   evolution_instances:

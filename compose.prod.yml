@@ -37,7 +37,7 @@ services:
       - NEXT_PUBLIC_GOOGLE_API_KEY=000
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
-    networks: # Adicionando a rede
+    networks:
       - bot-diario
 
   # Typebot Viewer Service
@@ -63,7 +63,7 @@ services:
       - MINIO_SERVER_URL
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
-    networks: # Adicionando a rede
+    networks:
       - bot-diario
 
   # Evolution API Service
@@ -76,25 +76,21 @@ services:
     volumes:
       - evolution_instances:/evolution/instances
     environment:
-      - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
+      - DATABASE_CONNECTION_URI=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgres
+      - DATABASE_SAVE_DATA_INSTANCES=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGES=true
+      - DATABASE_SAVE_MESSAGE_UPDATE=true
+      - CONFIG_SESSION_PHONE_CLIENT=typebot-sed
+      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - TYPEBOT_API_VERSION=latest
+      - AUTHENTICATION_API_KEY=${SERVICE_BASE64_128_EVOLUTION}
     depends_on:
-      - redis
       - postgres
-    networks: # Já estava aqui
+    networks:
       - bot-diario
-
-  # Redis Service
-  redis:
-    image: redis:latest
-    networks: # Já estava aqui
-      - bot-diario
-    container_name: redis
-    command: >
-      redis-server --port 6379 --appendonly yes
-    volumes:
-      - evolution_redis:/data
-    ports:
-      - 6379:6379
 
   # Postgres Service
   postgres:
@@ -114,7 +110,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     expose:
       - 5432
-    networks: # Adicionando a rede
+    networks:
       - bot-diario
 
   # MinIO Service
@@ -137,7 +133,7 @@ services:
       interval: 5s
       timeout: 20s
       retries: 10
-    networks: # Adicionando a rede
+    networks:
       - bot-diario
 
   # MinIO Create Bucket Service
@@ -155,7 +151,7 @@ services:
         /usr/bin/mc anonymous set public minio/typebot/public;
         exit 0;
         "
-    networks: # Adicionando a rede (precisa para se conectar ao minio)
+    networks:
       - bot-diario
 
   # API Service
@@ -176,7 +172,7 @@ services:
       - API_KEY=${SERVICE_BASE64_128_API}
     depends_on:
       - postgres
-    networks: # Adicionando a rede
+    networks:
       - bot-diario
 
 volumes:

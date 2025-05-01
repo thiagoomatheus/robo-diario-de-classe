@@ -51,7 +51,7 @@ services:
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme
       - ENCRYPTION_SECRET=${SERVICE_BASE64_SECRET}
       - DEFAULT_WORKSPACE_PLAN=UNLIMITED
-      - NEXTAUTH_URL=${SERVICE_FQDN_MANAGER}
+      - NEXTAUTH_URL=${SERVICE_FQDN_CHAT}
       - NEXT_PUBLIC_VIEWER_URL=${SERVICE_FQDN_CHAT}
       - NEXTAUTH_URL_INTERNAL=http://localhost:3000
       - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
@@ -122,8 +122,8 @@ services:
     image: 'quay.io/minio/minio:latest'
     command: 'server /data --console-address ":9001"'
     environment:
-      - MINIO_SERVER_URL=http://minio:9000
-      - MINIO_BROWSER_REDIRECT_URL=${SERVICE_FQDN_MANAGER}
+      - MINIO_SERVER_URL=${SERVICE_FQDN_MINIO}
+      - MINIO_BROWSER_REDIRECT_URL=${SERVICE_FQDN_REDIRECT_MINIO}
       - MINIO_ROOT_USER=${SERVICE_USER_MINIO}
       - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO}
     volumes:

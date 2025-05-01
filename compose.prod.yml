@@ -19,6 +19,22 @@ services:
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
       - S3_BUCKET=typebot
       - MINIO_SERVER_URL
+
+      #SMTP
+      - ADMIN_EMAIL=electroneumthiago01@gmail.com
+      - NEXT_PUBLIC_SMTP_FROM='Suporte' <electroneumthiago01@gmail.com>
+      - SMTP_USERNAME=electroneumthiago01@gmail.com
+      - SMTP_PASSWORD=nqmkmdwftcngccvc
+
+      - SMTP_AUTH_DISABLED=false
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=465
+      - SMTP_SECURE=true
+
+        #Google 
+      - GOOGLE_CLIENT_ID=000
+      - GOOGLE_CLIENT_SECRET=000
+      - NEXT_PUBLIC_GOOGLE_API_KEY=000
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
 

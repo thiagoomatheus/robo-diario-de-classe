@@ -31,12 +31,14 @@ services:
       - SMTP_PORT=465
       - SMTP_SECURE=true
 
-        #Google 
+      #Google 
       - GOOGLE_CLIENT_ID=000
       - GOOGLE_CLIENT_SECRET=000
       - NEXT_PUBLIC_GOOGLE_API_KEY=000
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
+    networks: # Adicionando a rede
+      - bot-diario
 
   # Typebot Viewer Service
   typebot_viewer:
@@ -61,6 +63,8 @@ services:
       - MINIO_SERVER_URL
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
+    networks: # Adicionando a rede
+      - bot-diario
 
   # Evolution API Service
   evolution-api:
@@ -76,14 +80,14 @@ services:
     depends_on:
       - redis
       - postgres
-    networks:
-      - evolution-net
+    networks: # Já estava aqui
+      - bot-diario
 
   # Redis Service
   redis:
     image: redis:latest
-    networks:
-      - evolution-net
+    networks: # Já estava aqui
+      - bot-diario
     container_name: redis
     command: >
       redis-server --port 6379 --appendonly yes
@@ -110,14 +114,16 @@ services:
       - postgres_data:/var/lib/postgresql/data
     expose:
       - 5432
+    networks: # Adicionando a rede
+      - bot-diario
 
   # MinIO Service
   minio:
     image: 'quay.io/minio/minio:latest'
     command: 'server /data --console-address ":9001"'
     environment:
-      - MINIO_SERVER_URL=${MINIO_SERVER_URL}
-      - MINIO_BROWSER_REDIRECT_URL=${MINIO_BROWSER_REDIRECT_URL}
+      - MINIO_SERVER_URL=http://minio:9000
+      - MINIO_BROWSER_REDIRECT_URL=${SERVICE_FQDN_MANAGER}
       - MINIO_ROOT_USER=${SERVICE_USER_MINIO}
       - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO}
     volumes:
@@ -131,6 +137,8 @@ services:
       interval: 5s
       timeout: 20s
       retries: 10
+    networks: # Adicionando a rede
+      - bot-diario
 
   # MinIO Create Bucket Service
   minio-createbucket:
@@ -147,6 +155,10 @@ services:
         /usr/bin/mc anonymous set public minio/typebot/public;
         exit 0;
         "
+    networks: # Adicionando a rede (precisa para se conectar ao minio)
+      - bot-diario
+
+  # API Service
   api:
     build:
       context: .
@@ -164,6 +176,8 @@ services:
       - API_KEY=${SERVICE_BASE64_128_API}
     depends_on:
       - postgres
+    networks: # Adicionando a rede
+      - bot-diario
 
 volumes:
   evolution_instances:
@@ -172,6 +186,6 @@ volumes:
   minio-data:
 
 networks:
-  evolution-net:
-    name: evolution-net
+  bot-diario:
+    name: bot-diario
     driver: bridge

@@ -37,7 +37,7 @@ services:
       - GOOGLE_CLIENT_SECRET=000
       - NEXT_PUBLIC_GOOGLE_API_KEY=000
     entrypoint: >
-      sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
+      sh -c 'export S3_ENDPOINT=$(echo "http://minio:9000" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
     networks:
       - bot-diario
 
@@ -64,7 +64,7 @@ services:
       - S3_ENDPOINT=minio:9000
       - MINIO_SERVER_URL=http://minio:9000
     entrypoint: >
-      sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
+      sh -c 'export S3_ENDPOINT=$(echo "http://minio:9000" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
     networks:
       - bot-diario
 

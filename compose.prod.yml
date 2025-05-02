@@ -79,7 +79,7 @@ services:
       - evolution_instances:/evolution/instances
     environment:
       - SERVICE_FQDN_EVO_8080
-      - SERVER_URL=$SERVICE_FQDN_EVO
+      - SERVER_URL=${URL_EVOLUTION_API}
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
       - DATABASE_CONNECTION_URI=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
       - DATABASE_PROVIDER=postgresql
@@ -142,7 +142,7 @@ services:
     command: 'server /data --console-address ":9001"'
     environment:
       - MINIO_SERVER_URL=http://minio:9000
-      - MINIO_BROWSER_REDIRECT_URL=${SERVICE_FQDN_REDIRECT_MINIO}
+      - MINIO_BROWSER_REDIRECT_URL=${URL_REDIRECT_MINIO}
       - MINIO_ROOT_USER=${SERVICE_USER_MINIO}
       - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO}
     volumes:

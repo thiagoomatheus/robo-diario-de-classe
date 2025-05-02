@@ -95,6 +95,18 @@ services:
       - AUTHENTICATION_API_KEY=${SERVICE_BASE64_128_EVOLUTION}
     depends_on:
       - postgres
+      - redis
+    networks:
+      - bot-diario
+
+  redis:
+    image: 'redis:latest'
+    command: "redis-server --port 6379 --appendonly yes\n"
+    restart: always
+    volumes:
+      - 'evolution_redis:/data'
+    ports:
+      - "6379:6379"
     networks:
       - bot-diario
 

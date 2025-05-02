@@ -18,7 +18,7 @@ services:
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
       - S3_BUCKET=typebot
-      - MINIO_SERVER_URL
+      - MINIO_SERVER_URL=http://minio:9000
 
       #SMTP
       - ADMIN_EMAIL=electroneumthiago01@gmail.com
@@ -60,7 +60,7 @@ services:
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
       - S3_BUCKET=typebot
-      - MINIO_SERVER_URL
+      - MINIO_SERVER_URL=http://minio:9000
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
     networks:
@@ -115,7 +115,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
       - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
-      - ./init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql
+      - ./init-schemas.sql:/docker-entrypoint-initdb.d/10-init-schemas.sql
       - postgres_data:/var/lib/postgresql/data
     expose:
       - 5432
@@ -179,6 +179,7 @@ services:
       - NODE_ENV=production
       - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD}
       - API_KEY=${SERVICE_BASE64_128_API}
+      - API_HOST=0.0.0.0
     depends_on:
       - postgres
     networks:

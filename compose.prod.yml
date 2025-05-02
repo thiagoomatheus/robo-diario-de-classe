@@ -93,6 +93,11 @@ services:
       - CONFIG_SESSION_PHONE_CLIENT=typebot-sed
       - CONFIG_SESSION_PHONE_NAME=Chrome
       - AUTHENTICATION_API_KEY=${SERVICE_BASE64_128_EVOLUTION}
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://localhost:6379/6
+      - CACHE_REDIS_PREFIX_KEY=evolutionv2
+      - CACHE_REDIS_SAVE_INSTANCES=false
+      - CACHE_LOCAL_ENABLED=false
     depends_on:
       - postgres
       - redis

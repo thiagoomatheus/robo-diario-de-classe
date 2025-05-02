@@ -18,6 +18,7 @@ services:
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
       - S3_BUCKET=typebot
+      - S3_ENDPOINT=minio:9000
       - MINIO_SERVER_URL=http://minio:9000
 
       #SMTP
@@ -60,6 +61,7 @@ services:
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
       - S3_BUCKET=typebot
+      - S3_ENDPOINT=minio:9000
       - MINIO_SERVER_URL=http://minio:9000
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "$MINIO_SERVER_URL" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
@@ -78,21 +80,15 @@ services:
     environment:
       - SERVICE_FQDN_EVO_8080
       - SERVER_URL=$SERVICE_FQDN_EVO
-      - DB_TYPE=${DB_TYPE:-postgresdb}
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-postgres}
-      - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST:-postgres}
-      - DB_POSTGRESDB_PORT=${DB_POSTGRESDB_PORT:-5432}
-      - DB_POSTGRESDB_USER=${SERVICE_USER_POSTGRES}
-      - DB_POSTGRESDB_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
-      - DATABASE_PROVIDER=${DATABASE_PROVIDER:-postgresql}
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
       - DATABASE_CONNECTION_URI=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
-      - DATABASE_ENABLED=true
-      - DATABASE_PROVIDER=postgres
-      - DATABASE_SAVE_DATA_INSTANCES=true
-      - DATABASE_SAVE_DATA_CONTACTS=true
-      - DATABASE_SAVE_DATA_NEW_MESSAGES=true
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
       - DATABASE_SAVE_MESSAGE_UPDATE=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - DATABASE_SAVE_DATA_CHATS=true
+      - DATABASE_SAVE_DATA_LABELS=true
+      - DATABASE_SAVE_DATA_HISTORIC=true
       - CONFIG_SESSION_PHONE_CLIENT=typebot-sed
       - CONFIG_SESSION_PHONE_NAME=Chrome
       - AUTHENTICATION_API_KEY=${SERVICE_BASE64_128_EVOLUTION}
@@ -115,7 +111,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
       - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
-      - ./init-schemas.sql:/docker-entrypoint-initdb.d/10-init-schemas.sql
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d/
       - postgres_data:/var/lib/postgresql/data
     expose:
       - 5432
@@ -179,7 +175,7 @@ services:
       - NODE_ENV=production
       - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD}
       - API_KEY=${SERVICE_BASE64_128_API}
-      - API_HOST=0.0.0.0
+      - API_HOST=${API_HOST}
     depends_on:
       - postgres
     networks:

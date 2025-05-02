@@ -54,7 +54,7 @@ app.register(fastifySwaggerUi, {
 
 app.register(routes)
 
-app.listen({ port: 3333, host: process.env.API_HOST }, (err, address) => {
+app.listen({ port: 3333, host: process.env.API_HOST || '0.0.0.0' }, (err, address) => {
   if (err) {
     console.error(err);
     process.exit(1);

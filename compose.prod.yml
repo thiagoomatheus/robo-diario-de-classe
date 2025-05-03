@@ -141,7 +141,7 @@ services:
     image: 'quay.io/minio/minio:latest'
     command: 'server /data --console-address ":9001"'
     environment:
-      - MINIO_SERVER_URL=http://minio:9000
+      - MINIO_SERVER_URL=http://0.0.0.0:9000
       - MINIO_BROWSER_REDIRECT_URL=${URL_REDIRECT_MINIO}
       - MINIO_ROOT_USER=${SERVICE_USER_MINIO}
       - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO}

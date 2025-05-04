@@ -17,7 +17,7 @@ services:
       - DISABLE_SIGNUP=false
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
-      - S3_ENDPOINT=http://minio:9000
+      - MINIO_SERVER_URL
 
       #SMTP
       - ADMIN_EMAIL=electroneumthiago01@gmail.com
@@ -58,9 +58,7 @@ services:
       - NEXT_PUBLIC_GOOGLE_API_KEY=$NEXT_PUBLIC_GOOGLE_API_KEY
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
-      - S3_BUCKET=typebot
-      - S3_ENDPOINT=http://minio:9000
-      - MINIO_SERVER_URL=http://minio:9000
+      - MINIO_SERVER_URL
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "http://minio:9000" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
     networks:
@@ -139,10 +137,10 @@ services:
     image: 'quay.io/minio/minio:latest'
     command: 'server /data --console-address ":9001"'
     environment:
-      - MINIO_SERVER_URL=http://0.0.0.0:9000
-      - MINIO_BROWSER_REDIRECT_URL=${URL_REDIRECT_MINIO}
-      - MINIO_ROOT_USER=${SERVICE_USER_MINIO}
-      - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO}
+      - MINIO_SERVER_URL=$MINIO_SERVER_URL
+      - MINIO_BROWSER_REDIRECT_URL=$MINIO_BROWSER_REDIRECT_URL
+      - MINIO_ROOT_USER=$SERVICE_USER_MINIO
+      - MINIO_ROOT_PASSWORD=$SERVICE_PASSWORD_MINIO
     volumes:
       - 'minio-data:/data'
     healthcheck:

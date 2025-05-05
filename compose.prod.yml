@@ -5,9 +5,9 @@ services:
     image: 'baptistearno/typebot-builder:latest'
     # Depende do postgres e do minio (e espera que o minio esteja saudável)
     depends_on:
-      - postgres
-      - minio:
-        condition: service_healthy
+      postgres:
+      minio:
+        condition service_healthy
     environment:
       - SERVICE_FQDN_MANAGER
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme
@@ -48,8 +48,8 @@ services:
     image: 'baptistearno/typebot-viewer:latest'
     # Depende do postgres e do minio (e espera que o minio esteja saudável)
     depends_on:
-      - postgres
-      - minio:
+      postgres:
+      minio:
         condition: service_healthy
     environment:
       - SERVICE_FQDN_CHAT
@@ -154,9 +154,9 @@ services:
     environment:
       # **CORRIGIDO:** MinIO agora conhece seu endereço interno na rede Docker
       - MINIO_SERVER_URL=http://minio:9000
-      - MINIO_BROWSER_REDIRECT_URL=$SERVICE_FQDN_CONSOLE # URL do console, pode ser externo
-      - MINIO_ROOT_USER=$SERVICE_USER_MINIO
-      - MINIO_ROOT_PASSWORD=$SERVICE_PASSWORD_MINIO
+      - MINIO_BROWSER_REDIRECT_URL=${SERVICE_FQDN_CONSOLE} # URL do console, pode ser externo
+      - MINIO_ROOT_USER=${SERVICE_USER_MINIO}
+      - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO}
     volumes:
       - 'minio-data:/data'
     healthcheck:

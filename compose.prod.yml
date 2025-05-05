@@ -5,9 +5,8 @@ services:
     image: 'baptistearno/typebot-builder:latest'
     # Depende do postgres e do minio (e espera que o minio esteja saudável)
     depends_on:
-      postgres:
-      minio:
-        condition service_healthy
+      - postgres
+      - minio
     environment:
       - SERVICE_FQDN_MANAGER
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme
@@ -48,9 +47,8 @@ services:
     image: 'baptistearno/typebot-viewer:latest'
     # Depende do postgres e do minio (e espera que o minio esteja saudável)
     depends_on:
-      postgres:
-      minio:
-        condition: service_healthy
+      - postgres
+      - minio
     environment:
       - SERVICE_FQDN_CHAT
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme

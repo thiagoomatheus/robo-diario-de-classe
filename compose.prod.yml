@@ -138,7 +138,7 @@ services:
       - POSTGRES_HOST_AUTH_METHOD=trust # Mantenha se necessário para init-scripts
     volumes:
       # Certifique-se que o diretório ./postgres-init-scripts existe com o arquivo init-schemas.sql
-      - ./postgres-init-scripts:/docker-entrypoint-initdb.d
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d/init-db-schemas.sql
       - postgres_data:/var/lib/postgresql/data
     expose: # expose apenas indica que a porta está disponível na rede interna
       - 5432

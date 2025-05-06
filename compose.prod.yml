@@ -3,7 +3,6 @@ services:
   # Typebot Builder Service
   typebot_builder:
     image: 'baptistearno/typebot-builder:latest'
-    # Depende do postgres e do minio (e espera que o minio esteja saudável)
     depends_on:
       - postgres
       - minio
@@ -16,11 +15,9 @@ services:
       - NEXT_PUBLIC_VIEWER_URL=${SERVICE_FQDN_CHAT}
       - NEXTAUTH_URL_INTERNAL=http://localhost:3000
       - DISABLE_SIGNUP=false
-      # **CORRIGIDO:** Usando variáveis SERVICE_ do Coolify para as credenciais do Minio
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
-      # A variável abaixo não precisa ser definida aqui se S3_ENDPOINT for usada no entrypoint
-      # - MINIO_SERVER_URL
+      - MINIO_SERVER_URL
 
       #SMTP
       - ADMIN_EMAIL=electroneumthiago01@gmail.com
@@ -33,10 +30,10 @@ services:
       - SMTP_PORT=465
       - SMTP_SECURE=true
 
-      #Google
-      - GOOGLE_CLIENT_ID=000 # Substitua por suas credenciais reais
-      - GOOGLE_CLIENT_SECRET=000 # Substitua por suas credenciais reais
-      - NEXT_PUBLIC_GOOGLE_API_KEY=000 # Substitua por sua chave real
+      #Google 
+      - GOOGLE_CLIENT_ID=000
+      - GOOGLE_CLIENT_SECRET=000
+      - NEXT_PUBLIC_GOOGLE_API_KEY=000
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "http://minio:9000" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
     networks:
@@ -45,7 +42,6 @@ services:
   # Typebot Viewer Service
   typebot_viewer:
     image: 'baptistearno/typebot-viewer:latest'
-    # Depende do postgres e do minio (e espera que o minio esteja saudável)
     depends_on:
       - postgres
       - minio
@@ -57,14 +53,12 @@ services:
       - NEXTAUTH_URL=${SERVICE_FQDN_CHAT}
       - NEXT_PUBLIC_VIEWER_URL=${SERVICE_FQDN_CHAT}
       - NEXTAUTH_URL_INTERNAL=http://localhost:3000
-      - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID # Certifique-se que estas vêm do Coolify ou de .env
-      - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET # Certifique-se que estas vêm do Coolify ou de .env
-      - NEXT_PUBLIC_GOOGLE_API_KEY=$NEXT_PUBLIC_GOOGLE_API_KEY # Certifique-se que estas vêm do Coolify ou de .env
-      # Credenciais Minio já estavam SERVICE_ aqui, mantido
+      - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+      - NEXT_PUBLIC_GOOGLE_API_KEY=$NEXT_PUBLIC_GOOGLE_API_KEY
       - S3_ACCESS_KEY=${SERVICE_USER_MINIO}
       - S3_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
-      # A variável abaixo não precisa ser definida aqui se S3_ENDPOINT for usada no entrypoint
-      # - MINIO_SERVER_URL
+      - MINIO_SERVER_URL
     entrypoint: >
       sh -c 'export S3_ENDPOINT=$(echo "http://minio:9000" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
     networks:
@@ -75,15 +69,13 @@ services:
     container_name: evolution_api
     image: atendai/evolution-api:v2.1.1
     restart: always
-    # Removida porta 8082:8080 se Coolify gerencia portas/domínios (SERVICE_FQDN_EVO_8080 indica isso)
-    # Se você precisar expor essa porta diretamente, mantenha-a.
-    # ports:
-    #   - "8082:8080"
+    ports:
+      - "8082:8080"
     volumes:
       - evolution_instances:/evolution/instances
     environment:
       - SERVICE_FQDN_EVO_8080
-      - SERVER_URL=${URL_EVOLUTION_API} # Certifique-se que esta variável está definida no Coolify
+      - SERVER_URL=${URL_EVOLUTION_API}
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
       - DATABASE_CONNECTION_URI=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=evolution_api
       - DATABASE_PROVIDER=postgresql
@@ -94,12 +86,13 @@ services:
       - DATABASE_SAVE_DATA_CHATS=true
       - DATABASE_SAVE_DATA_LABELS=true
       - DATABASE_SAVE_DATA_HISTORIC=true
-      - CONFIG_SESSION_PHONE_CLIENT=typebot-sed # Ajuste se necessário
-      - CONFIG_SESSION_PHONE_NAME=Chrome # Ajuste se necessário
+      - CONFIG_SESSION_PHONE_CLIENT=typebot-sed
+      - CONFIG_SESSION_PHONE_NAME=Chrome
       - AUTHENTICATION_API_KEY=${SERVICE_BASE64_128_EVOLUTION}
       - CACHE_REDIS_ENABLED=true
       - CACHE_REDIS_URI=redis://redis:6379/6
       - CACHE_REDIS_PREFIX_KEY=evolutionv2
+      - CACHE_REDIS_SAVE_INSTANCES=false
       - CACHE_LOCAL_ENABLED=false
     depends_on:
       - postgres
@@ -113,10 +106,8 @@ services:
     restart: always
     volumes:
       - 'evolution_redis:/data'
-    # Removida porta 6379:6379 se Coolify gerencia portas/domínios e não precisa ser exposta externamente
-    # Se você precisar acessar o Redis externamente, mantenha-a.
-    # ports:
-    #   - "6379:6379"
+    ports:
+      - "6379:6379"
     networks:
       - bot-diario
 
@@ -126,67 +117,61 @@ services:
     image: postgres:16
     command: ["postgres", "-c", "max_connections=1000", "-c", "listen_addresses=*"]
     restart: always
-    # Removida porta 5432:5432 se Coolify gerencia portas/domínios e não precisa ser exposta externamente
-    # Se você precisar acessar o Postgres externamente, mantenha-a.
-    # ports:
-    #   - 5432:5432
+    ports:
+      - 5432:5432
     environment:
       - POSTGRES_USER=${SERVICE_USER_POSTGRES}
       - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
-      # Note: POSTGRES_HOST_AUTH_METHOD=trust é inseguro para produção, considere usar 'password'
-      - POSTGRES_HOST_AUTH_METHOD=trust # Mantenha se necessário para init-scripts
+      - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
-      # Certifique-se que o diretório ./postgres-init-scripts existe com o arquivo init-schemas.sql
-      - ./postgres-init-scripts:/docker-entrypoint-initdb.d/init-db-schemas.sql
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d/init-schemas.sql
       - postgres_data:/var/lib/postgresql/data
-    expose: # expose apenas indica que a porta está disponível na rede interna
+    expose:
       - 5432
     networks:
       - bot-diario
 
   # MinIO Service
-  minio:
-    image: 'quay.io/minio/minio:latest'
-    command: 'server /data --console-address ":9001"'
-    environment:
-      # **CORRIGIDO:** MinIO agora conhece seu endereço interno na rede Docker
-      - MINIO_SERVER_URL=http://minio:9000
-      - MINIO_ROOT_USER=${SERVICE_USER_MINIO}
-      - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO}
-    volumes:
-      - 'minio-data:/data'
-    healthcheck:
-      test:
-        - CMD
-        - mc
-        - ready
-        - local
-      interval: 5s
-      timeout: 20s
-      retries: 10
-    networks:
-      - bot-diario
+  # minio:
+  #   image: 'quay.io/minio/minio:latest'
+  #   command: 'server /data --console-address ":9001"'
+  #   environment:
+  #     - MINIO_SERVER_URL=$SERVICE_FQDN_MINIO
+  #     - MINIO_BROWSER_REDIRECT_URL=$SERVICE_FQDN_CONSOLE
+  #     - MINIO_ROOT_USER=$SERVICE_USER_MINIO
+  #     - MINIO_ROOT_PASSWORD=$SERVICE_PASSWORD_MINIO
+  #   volumes:
+  #     - 'minio-data:/data'
+  #   healthcheck:
+  #     test:
+  #       - CMD
+  #       - mc
+  #       - ready
+  #       - local
+  #     interval: 5s
+  #     timeout: 20s
+  #     retries: 10
+  #   networks:
+  #     - bot-diario
 
-  # MinIO Create Bucket Service
-  minio-createbucket:
-    image: minio/mc
-    restart: 'no' # Execute apenas uma vez
-    depends_on:
-      minio:
-        condition: service_healthy # Garante que o MinIO está pronto
-    entrypoint: >
-        /bin/sh -c "
-        # Não é ideal usar sleep fixo, dependência no healthcheck já ajuda
-        # sleep 10;
-        /usr/bin/mc config host add minio http://minio:9000 ${SERVICE_USER_MINIO} ${SERVICE_PASSWORD_MINIO};
-        /usr/bin/mc rb --force minio/typebot; # Adicionado --force para remover se existir (ajuda em re-deploy)
-        /usr/bin/mc mb minio/typebot; # Cria o bucket
-        /usr/bin/mc anonymous set public minio/typebot/public;
-        exit 0;
-        "
-    networks:
-      - bot-diario
+  # # MinIO Create Bucket Service
+  # minio-createbucket:
+  #   image: minio/mc
+  #   restart: 'no'
+  #   depends_on:
+  #     minio:
+  #       condition: service_healthy
+  #   entrypoint: >
+  #       /bin/sh -c "
+  #       sleep 10;
+  #       /usr/bin/mc config host add minio http://minio:9000 ${SERVICE_USER_MINIO} ${SERVICE_PASSWORD_MINIO};
+  #       /usr/bin/mc mb minio/typebot;
+  #       /usr/bin/mc anonymous set public minio/typebot/public;
+  #       exit 0;
+  #       "
+  #   networks:
+  #     - bot-diario
 
   # API Service
   api:
@@ -195,18 +180,16 @@ services:
       dockerfile: Dockerfile.prod
       args:
         - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=api_scheme
-    # Removida porta 3333:3333 se Coolify gerencia portas/domínios (geralmente sim)
-    # Se você precisar expor essa porta diretamente, mantenha-a.
-    # ports:
-    #   - "3333:3333"
+    ports:
+      - "3333:3333"
     environment:
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=api_scheme
       - JWT_SECRET=${SERVICE_BASE64_128_JWTSECRET}
       - JWT_EXPIRES_IN=1800
       - NODE_ENV=production
-      - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD} # Certifique-se que esta variável está definida no Coolify
-      - API_KEY=${SERVICE_BASE64_128_API} # Certifique-se que esta variável está definida no Coolify
-      - API_HOST=${API_HOST} # Certifique-se que esta variável está definida no Coolify
+      - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD}
+      - API_KEY=${SERVICE_BASE64_128_API}
+      - API_HOST=${API_HOST}
     depends_on:
       - postgres
     networks:

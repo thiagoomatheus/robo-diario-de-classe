@@ -118,7 +118,6 @@ services:
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-postgres}
-      - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_USER=${SERVICE_USER_POSTGRES}
       - DB_POSTGRESDB_PASSWORD=${SERVICE_PASSWORD_POSTGRES}

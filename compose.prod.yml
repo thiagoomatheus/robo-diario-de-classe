@@ -163,3 +163,4 @@ networks:
   bot-diario:
     name: bot-diario
     driver: bridge
+    external: true

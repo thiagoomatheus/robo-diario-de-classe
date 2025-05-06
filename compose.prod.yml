@@ -116,10 +116,15 @@ services:
     ports:
       - 5432:5432
     environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-postgres}
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_USER=${SERVICE_USER_POSTGRES}
+      - DB_POSTGRESDB_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
       - POSTGRES_USER=${SERVICE_USER_POSTGRES}
       - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
-      - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d/init-schemas.sql
       - postgres_data:/var/lib/postgresql/data

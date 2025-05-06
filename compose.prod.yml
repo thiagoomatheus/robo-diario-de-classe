@@ -5,7 +5,6 @@ services:
     image: 'baptistearno/typebot-builder:latest'
     depends_on:
       - postgres
-      - minio
     environment:
       - SERVICE_FQDN_MANAGER
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme
@@ -43,7 +42,6 @@ services:
     image: 'baptistearno/typebot-viewer:latest'
     depends_on:
       - postgres
-      - minio
     environment:
       - SERVICE_FQDN_CHAT
       - DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${POSTGRES_DB:-postgres}?schema=typebot_scheme
@@ -156,7 +154,6 @@ volumes:
   evolution_instances:
   evolution_redis:
   postgres_data:
-  minio-data:
 
 networks:
   bot-diario:

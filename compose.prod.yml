@@ -35,8 +35,8 @@ services:
       - GOOGLE_CLIENT_ID=000
       - GOOGLE_CLIENT_SECRET=000
       - NEXT_PUBLIC_GOOGLE_API_KEY=000
-    entrypoint: >
-      sh -c 'export S3_ENDPOINT=$(echo "${URL_MINIO}" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
+    # entrypoint: >
+    #   sh -c 'export S3_ENDPOINT=$(echo "${URL_MINIO}" | sed "s~^https\?://~~"); exec "/app/builder-entrypoint.sh"'
     networks:
       - bot-diario
 
@@ -61,8 +61,8 @@ services:
       - S3_ENDPOINT=${URL_MINIO}
       - S3_PORT=9000
       - S3_SECURE=false
-    entrypoint: >
-      sh -c 'export S3_ENDPOINT=$(echo "${URL_MINIO}" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
+    # entrypoint: >
+    #   sh -c 'export S3_ENDPOINT=$(echo "${URL_MINIO}" | sed "s~^https\?://~~"); exec "/app/viewer-entrypoint.sh"'
     networks:
       - bot-diario
 

@@ -84,6 +84,7 @@ export default async function routes(app: FastifyTypedInstance) {
           sucesso: z.boolean(),
           token: z.string(),
           expiraEm: z.string(),
+          login: z.string(),
         }),
         400: z.object({
           sucesso: z.boolean(),
@@ -138,7 +139,8 @@ export default async function routes(app: FastifyTypedInstance) {
       return reply.status(200).send({
         sucesso: true,
         token: token,
-        expiraEm: JWT_EXPIRES_IN, // Informe a expiração para o cliente
+        expiraEm: JWT_EXPIRES_IN,
+        login: usuario.login
       });
 
     } catch (error) {

@@ -89,13 +89,13 @@ export default async function routes(app: FastifyTypedInstance) {
     }
   });
     
-  app.get('/turmas', {
+  app.post('/turmas', {
     preHandler: [authenticateJWT],
     schema: {
       tags: ['Turmas'],
       description: 'Busca todas as turmas',
-      querystring: z.object({
-        telefone: z.string()
+      body: z.object({
+        senha: z.string(),
       }),
       security: [
         {
@@ -120,6 +120,7 @@ export default async function routes(app: FastifyTypedInstance) {
   }, async (req, reply) => {
 
     const usuario = req.user;
+    const senha = req.body.senha;
 
     if (!usuario) {
       return reply.status(401).send({
@@ -133,7 +134,7 @@ export default async function routes(app: FastifyTypedInstance) {
     try {
       const resultado = await buscarTurmas({
         login: usuario.login,
-        password: usuario.senha,
+        password: senha,
       })
   
       if (!resultado.sucesso || !resultado.turmas) {
@@ -164,14 +165,14 @@ export default async function routes(app: FastifyTypedInstance) {
       
   })
       
-  app.get('/alunos', {
+  app.post('/alunos', {
     preHandler: [authenticateJWT],
     schema: {
       tags: ['Alunos'],
       description: 'Busca todos os alunos',
-      querystring: z.object({
-        telefone: z.string(),
-        indiceTurma: z.string()
+      body: z.object({
+        senha: z.string(),
+        indiceTurma: z.string(),
       }),
       security: [
         {
@@ -195,7 +196,7 @@ export default async function routes(app: FastifyTypedInstance) {
     }
   }, async (req, reply) => {
     
-    const { indiceTurma } = req.query
+    const { indiceTurma, senha } = req.body;
     
     const usuario = req.user;
 
@@ -211,7 +212,7 @@ export default async function routes(app: FastifyTypedInstance) {
     try {
       const resultado = await buscarAlunos({
         login: usuario.login,
-        password: usuario.senha,
+        password: senha,
         indiceTurma: Number(indiceTurma)
       })
   
@@ -251,7 +252,7 @@ export default async function routes(app: FastifyTypedInstance) {
       body: z.object({
         data: z.string(),
         alunosComFalta: z.array(z.number().int()),
-        telefone: z.string()
+        senha: z.string(),
       }),
       security: [
         {
@@ -275,7 +276,7 @@ export default async function routes(app: FastifyTypedInstance) {
     }
   }, async (req, reply) => {
         
-    const { data, alunosComFalta } = req.body;
+    const { data, alunosComFalta, senha } = req.body;
     
     const usuario = req.user;
 
@@ -292,7 +293,7 @@ export default async function routes(app: FastifyTypedInstance) {
         alunosComFalta: alunosComFalta,
         data,
         login: usuario.login,
-        password: usuario.senha,
+        password: senha,
       })
   
       if (!resultado.sucesso) {
@@ -328,7 +329,7 @@ export default async function routes(app: FastifyTypedInstance) {
       tags: ['Aulas'],
       description: 'Registra as aulas',
       body: z.object({
-        telefone: z.string(),
+        senha: z.string(),
         linkCronograma: z.string(),
         bimestre: z.string(),
       }),
@@ -354,7 +355,7 @@ export default async function routes(app: FastifyTypedInstance) {
     }
   }, async (req, reply) => {
         
-    const { linkCronograma, bimestre } = req.body;
+    const { linkCronograma, bimestre, senha } = req.body;
     
     const usuario = req.user;
 
@@ -369,7 +370,7 @@ export default async function routes(app: FastifyTypedInstance) {
   
       const resultado = await registrarAula({
         login: usuario.login,
-        password: usuario.senha,
+        password: senha,
         linkCronograma,
         bimestre
       })

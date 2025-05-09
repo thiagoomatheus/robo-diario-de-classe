@@ -17,7 +17,6 @@ declare module 'fastify' {
      user?: {
       id: string;
       login: string;
-      senha: string;
       telefone: string;
     };
   }

@@ -149,6 +149,7 @@ services:
       - GEMINI_API_KEY=${SERVICE_GEMINI_API_KEY_PROD}
       - API_KEY=${SERVICE_BASE64_128_API}
       - API_HOST=${API_HOST}
+      - ADMIN_API_KEY=${SERVICE_BASE64_128_ADMIN}
     depends_on:
       - postgres
     networks:

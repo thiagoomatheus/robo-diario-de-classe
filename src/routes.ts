@@ -10,6 +10,67 @@ import { authenticateJWT } from "./hooks/auth";
 
 export default async function routes(app: FastifyTypedInstance) {
 
+  app.post('/usuarios', {
+    schema: {
+      tags: ['Usuários'],
+      description: 'Cria um novo usuário.',
+      body: z.object({
+        telefone: z.string(),
+        login: z.string(),
+        adminApiKey: z.string(),
+      }),
+      response: {
+        200: z.object({
+          sucesso: z.boolean(),
+          mensagem: z.string(),
+        }),
+        400: z.object({
+          sucesso: z.boolean(),
+          mensagem: z.string(),
+        }),
+        500: z.object({
+          sucesso: z.boolean(),
+          mensagem: z.string(),
+        }),
+      },
+    },
+  }, async (req, reply) => {
+    const { telefone, login, adminApiKey } = req.body;
+
+    if (!telefone || !login) {
+      return reply.status(400).send({
+        sucesso: false,
+        mensagem: 'Telefone e login obrigatórios.',
+      });
+    }
+
+    if (adminApiKey !== process.env.ADMIN_API_KEY) {
+      return reply.status(400).send({
+        sucesso: false,
+        mensagem: 'Chave de admin inválida.',
+      });
+    }
+
+    try {
+      await prisma.usuario.create({
+        data: {
+          telefone: telefone,
+          login: login,
+        }
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: 'Usuário criado com sucesso.',
+      });
+    } catch (error) {
+      return reply.status(500).send({
+        sucesso: false,
+        mensagem: 'Erro ao criar usuário.',
+      });
+    }
+  });
+
   app.post('/token', {
     schema: {
       tags: ['Autenticação'],

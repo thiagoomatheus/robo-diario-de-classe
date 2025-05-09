@@ -8,8 +8,7 @@ datasource db {
 }
 
 model Usuario {
-  id String @id @default(uuid())
-  login String
+  id       String @id @default(uuid())
+  login    String
   telefone String @unique
 }
-

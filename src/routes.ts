@@ -66,7 +66,7 @@ export default async function routes(app: FastifyTypedInstance) {
     } catch (error) {
       return reply.status(500).send({
         sucesso: false,
-        mensagem: 'Erro ao criar usuário.',
+        mensagem: 'Erro ao criar usuário: ' + error,
       });
     }
   });

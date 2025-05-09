@@ -92,6 +92,7 @@ services:
       - CACHE_LOCAL_ENABLED=false
       - TYPEBOT_API_VERSION=latest
       - TYPEBOT_KEEP_OPEN=true
+      - TYPEBOT_ENABLED=true
     depends_on:
       - postgres
       - redis

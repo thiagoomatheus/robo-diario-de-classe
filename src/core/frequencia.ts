@@ -108,7 +108,7 @@ export const marcarFrequencia = (async (config: ConfigFrequencia) => {
         
         const btnSalvarFalta = document.querySelector(BTN_SALVAR_FALTA_SELECTOR) as HTMLElement;
         btnSalvarFalta.click();
-      });
+      }, BTN_SALVAR_FALTA_SELECTOR);
     
       /* await clickComEvaluate(page, BTN_SALVAR_FALTA_SELECTOR); */
 

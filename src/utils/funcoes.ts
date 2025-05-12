@@ -19,7 +19,6 @@ export const iniciarNavegacao = async () => {
         '--disable-gpu', // Desabilita o uso de GPU (útil em contêineres sem aceleração gráfica)
         '--disable-dev-shm-usage' // Evita problemas com /dev/shm
       ],
-      headless: false
     });
   
     const page: Page = await browser.newPage();

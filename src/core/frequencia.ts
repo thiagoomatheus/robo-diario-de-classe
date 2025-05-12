@@ -102,12 +102,12 @@ export const marcarFrequencia = (async (config: ConfigFrequencia) => {
       await marcarFalta(page, alunosComFalta);
 
       console.log("Salvando falta");
-
-      await page.waitForSelector(BTN_SALVAR_FALTA_SELECTOR, { timeout: 5000 });
     
       await clickComEvaluate(page, BTN_SALVAR_FALTA_SELECTOR);
 
       console.log("Confirmando falta");
+
+      await page.waitForSelector(BTN_SIM_SELECTOR);
       
       await clickComEvaluate(page, BTN_SIM_SELECTOR);
 

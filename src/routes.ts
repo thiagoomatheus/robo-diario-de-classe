@@ -327,6 +327,10 @@ export default async function routes(app: FastifyTypedInstance) {
           sucesso: z.boolean(),
           mensagem: z.string()
         }),
+        400: z.object({
+          sucesso: z.boolean(),
+          mensagem: z.string()
+        }),
         404: z.object({
           sucesso: z.boolean(),
           mensagem: z.string()

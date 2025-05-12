@@ -102,8 +102,15 @@ export const marcarFrequencia = (async (config: ConfigFrequencia) => {
       await marcarFalta(page, alunosComFalta);
 
       console.log("Salvando falta");
+
+      await page.evaluate(() => {
+        console.log(BTN_SALVAR_FALTA_SELECTOR);
+        
+        const btnSalvarFalta = document.querySelector(BTN_SALVAR_FALTA_SELECTOR) as HTMLElement;
+        btnSalvarFalta.click();
+      });
     
-      await clickComEvaluate(page, BTN_SALVAR_FALTA_SELECTOR);
+      /* await clickComEvaluate(page, BTN_SALVAR_FALTA_SELECTOR); */
 
       console.log("Confirmando falta");
 

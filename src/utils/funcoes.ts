@@ -19,6 +19,7 @@ export const iniciarNavegacao = async () => {
         '--disable-gpu', // Desabilita o uso de GPU (útil em contêineres sem aceleração gráfica)
         '--disable-dev-shm-usage' // Evita problemas com /dev/shm
       ],
+      headless: false
     });
   
     const page: Page = await browser.newPage();
@@ -149,9 +150,9 @@ export async function iniciar(config: ConfigIniciar) {
 export const clickComEvaluate = async (page: Page, seletor: string) => {
 
     await page.evaluate((seletor) => {
-        const elemento = document.querySelector(seletor) as HTMLElement;
+      const elemento = document.querySelector(seletor) as HTMLElement;
 
-        elemento.click()
+      elemento.click()
     }, seletor);
 
 }
@@ -310,7 +311,6 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
       case "frequencia":
         await clickComEvaluate(page, DATE_SELECTOR)
-        .then(() => console.log("Data selecionada com sucesso"));
     
         await page.focus(INPUT_DATE_SELECTOR)
         .then(() => page.keyboard.press('Enter'))
@@ -387,9 +387,10 @@ export const selecionandoHorario = async (page: Page, tipoDeSelecao: "unico" | "
 
   switch (tipoDeSelecao) {
     case "unico":
-      await page.waitForSelector(HORARIO_SELECTOR);
 
       await clickComEvaluate(page, HORARIO_SELECTOR);
+
+      await page.waitForSelector('#chHorario:checked');
       
       break;
     case "todos":
@@ -415,8 +416,17 @@ export const abrindoSeletorHorario = async (page: Page) => await page.evaluate((
     }, 1000)
 })
 
-export const marcarFalta = async (page: Page, alunosComFalta: number[]) => await page.evaluate((alunoComFalta) => {
-  
-    alunoComFalta.map(async (numeroDoAluno) => await clickComEvaluate(page, `#frequencias_wrapper tbody tr:nth-child(${numeroDoAluno}) #divPresenca`));
+export const marcarFalta = async (page: Page, alunosComFalta: number[]) => {
 
-}, alunosComFalta);
+  await page.waitForSelector(`#frequencias_wrapper tbody tr #divPresenca`, { visible: true });
+
+  alunosComFalta.map(async (numeroDoAluno) => {
+    
+    page.evaluate((numeroDoAluno) => {
+      const elemento = document.querySelector(`#frequencias_wrapper tbody tr:nth-child(${numeroDoAluno}) #divPresenca`) as HTMLElement;
+      elemento.click();
+      console.log(`Aluno ${numeroDoAluno} marcado com sucesso`);
+      
+    }, numeroDoAluno)
+  });
+}

@@ -69,7 +69,7 @@ export const marcarFrequencia = (async (config: ConfigFrequencia) => {
 
       console.log("Verificando horários");
   
-      await abrindoSeletorHorario(page);
+      abrindoSeletorHorario(page);
   
       try {
         await page.waitForSelector(HORARIO_SELECTOR, { timeout: 5000 });
@@ -89,31 +89,29 @@ export const marcarFrequencia = (async (config: ConfigFrequencia) => {
 
       console.log("Selecionando horário");
       
-      await selecionandoHorario(page, "unico");
+      selecionandoHorario(page, "unico");
   
-      await page.waitForSelector(BTN_LISTAR_ALUNOS_SELECTOR);
+      page.waitForSelector(BTN_LISTAR_ALUNOS_SELECTOR);
 
       console.log("Listando alunos");
   
       await clickComEvaluate(page, BTN_LISTAR_ALUNOS_SELECTOR);
 
+      await page.waitForResponse('https://frequencia.sed.educacao.sp.gov.br/Frequencia/FrequenciaParcial')
+
       console.log("Marcando alunos com falta");
-  
-      await marcarFalta(page, alunosComFalta);
+      
+      marcarFalta(page, alunosComFalta);
 
       console.log("Salvando falta");
 
-      console.log('.rodape-botao input');
-
-      await page.evaluate(() => {
-        
-        const btnSalvarFalta = document.querySelector('.rodape-botao input') as HTMLElement;
-        btnSalvarFalta.click();
-      }, );
+      await page.waitForSelector(BTN_SALVAR_FALTA_SELECTOR);
     
-      /* await clickComEvaluate(page, BTN_SALVAR_FALTA_SELECTOR); */
+      await clickComEvaluate(page, BTN_SALVAR_FALTA_SELECTOR);
 
       console.log("Confirmando falta");
+
+      await page.waitForSelector(BTN_SIM_SELECTOR);
 
       await page.waitForSelector(BTN_SIM_SELECTOR);
       

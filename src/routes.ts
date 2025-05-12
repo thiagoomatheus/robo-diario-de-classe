@@ -350,14 +350,14 @@ export default async function routes(app: FastifyTypedInstance) {
       });
     }
 
+    console.log(JSON.parse(alunosComFalta));
+
     if (!data || !alunosComFalta) {
       return reply.status(400).send({
         sucesso: false,
         mensagem: 'Data ou alunos com falta ausentes.',
       });
     }
-
-    console.log(JSON.parse(alunosComFalta));
       
     try {
   

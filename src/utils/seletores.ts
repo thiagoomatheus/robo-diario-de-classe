@@ -15,5 +15,5 @@ export const HORARIO_SELECTOR: string = '#chHorario';
 // Botoes
 export const BTN_LISTAR_ALUNOS_SELECTOR: string = '#btnListarAlunos';
 export const ALUNOS_SELECTOR: string = '#frequencias_wrapper tbody tr td .tip';
-export const BTN_SALVAR_FALTA_SELECTOR: string = 'input[name="btnSalvarPresença"]';
+export const BTN_SALVAR_FALTA_SELECTOR: string = '.rodape-botao input';
 export const BTN_SIM_SELECTOR: string = '.msg-mensagem-botao button';

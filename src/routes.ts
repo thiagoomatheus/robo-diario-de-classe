@@ -314,7 +314,7 @@ export default async function routes(app: FastifyTypedInstance) {
       description: 'Marca frequencia',
       body: z.object({
         data: z.string(),
-        alunosComFalta: z.array(z.number().int()),
+        alunosComFalta: z.string(),
         senha: z.string(),
       }),
       security: [
@@ -353,7 +353,7 @@ export default async function routes(app: FastifyTypedInstance) {
     try {
   
       const resultado = await marcarFrequencia({
-        alunosComFalta: alunosComFalta,
+        alunosComFalta: JSON.parse(alunosComFalta),
         data,
         login: usuario.login,
         password: senha,

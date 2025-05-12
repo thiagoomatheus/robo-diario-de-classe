@@ -1,6 +1,6 @@
 import { isToday, parse } from "date-fns";
 import { navegarParaUrl, selecionarMateria, selecionandoData, abrindoSeletorHorario, selecionandoHorario, clickComEvaluate, marcarFalta, iniciar } from "../utils/funcoes";
-import { ALUNOS_SELECTOR, BTN_LISTAR_ALUNOS_SELECTOR, BTN_SALVAR_FALTA_SELECTOR, BTN_SIM_SELECTOR, DATEPICKER_SELECTOR, HORARIO_SELECTOR } from "../utils/seletores";
+import { BTN_LISTAR_ALUNOS_SELECTOR, BTN_SALVAR_FALTA_SELECTOR, BTN_SIM_SELECTOR, DATEPICKER_SELECTOR, HORARIO_SELECTOR } from "../utils/seletores";
 
 type ConfigFrequencia = {
     data: string,
@@ -96,8 +96,6 @@ export const marcarFrequencia = (async (config: ConfigFrequencia) => {
       console.log("Listando alunos");
   
       await clickComEvaluate(page, BTN_LISTAR_ALUNOS_SELECTOR);
-  
-      await page.waitForSelector(ALUNOS_SELECTOR);
 
       console.log("Marcando alunos com falta");
   

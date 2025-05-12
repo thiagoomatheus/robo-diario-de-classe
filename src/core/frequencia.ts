@@ -103,8 +103,9 @@ export const marcarFrequencia = (async (config: ConfigFrequencia) => {
 
       console.log("Salvando falta");
 
+      console.log('.rodape-botao input');
+
       await page.evaluate(() => {
-        console.log('.rodape-botao input');
         
         const btnSalvarFalta = document.querySelector('.rodape-botao input') as HTMLElement;
         btnSalvarFalta.click();

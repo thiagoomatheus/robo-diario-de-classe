@@ -347,26 +347,47 @@ export default async function routes(app: FastifyTypedInstance) {
     
     const usuario = req.user;
 
+    const retornarArrayAlunosComFalta = () => {
+
+      if (alunosComFalta === "0") {
+        return []
+      }
+
+      if (alunosComFalta.includes(',')) {
+      
+        const array = alunosComFalta.split(',')
+  
+        const arrayDeNumeros = array.map(Number)
+  
+        return arrayDeNumeros
+        
+      } else if (!alunosComFalta.includes(',')) {
+  
+        alunosComFalta.trim()
+        
+        const nAluno = parseInt(alunosComFalta)
+  
+        return [nAluno]
+        
+      }
+
+      return []
+      
+    }
+
+    const arrayAlunosComFalta = retornarArrayAlunosComFalta();
+
     if (!usuario) {
       return reply.status(401).send({
         sucesso: false,
         mensagem: 'Usuário não autenticado.',
       });
     }
-
-    console.log(JSON.parse(alunosComFalta));
-
-    if (!data || !alunosComFalta) {
-      return reply.status(400).send({
-        sucesso: false,
-        mensagem: 'Data ou alunos com falta ausentes.',
-      });
-    }
       
     try {
   
       const resultado = await marcarFrequencia({
-        alunosComFalta: JSON.parse(alunosComFalta),
+        alunosComFalta: arrayAlunosComFalta,
         data,
         login: usuario.login,
         password: senha,

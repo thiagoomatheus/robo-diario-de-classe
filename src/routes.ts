@@ -380,7 +380,7 @@ export default async function routes(app: FastifyTypedInstance) {
     if (!usuario) {
       return reply.status(401).send({
         sucesso: false,
-        mensagem: 'Usuário não autenticado.',
+        mensagem: 'Usuário não autenticado.'
       });
     }
       
@@ -411,7 +411,6 @@ export default async function routes(app: FastifyTypedInstance) {
     }
 
     console.log("Frequencia marcada com sucesso");
-    
       
     return reply.status(200).send({
       sucesso: true,

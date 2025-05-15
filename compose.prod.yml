@@ -97,9 +97,9 @@ services:
       - S3_ACCESS_KEY=${USER_MINIO}
       - S3_SECRET_KEY=${PASSWORD_MINIO}
       - S3_BUCKET=typebot
-      - S3_PORT=9000
-      - S3_ENDPOINT=${URL_MINIO_ENDPOINT}
-      - S3_USE_SSL=false
+      - S3_PORT=443
+      - S3_ENDPOINT=${URL_MINIO}
+      - S3_USE_SSL=true
     depends_on:
       - postgres
       - redis

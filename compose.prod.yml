@@ -98,7 +98,7 @@ services:
       - S3_SECRET_KEY=${PASSWORD_MINIO}
       - S3_BUCKET=typebot
       - S3_ENDPOINT=${URL_MINIO}
-      - S3_PORT=9000
+      - S3_PORT=443
     depends_on:
       - postgres
       - redis

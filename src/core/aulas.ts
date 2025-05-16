@@ -152,9 +152,9 @@ export const registrarAula = async (config: ConfigAula) => {
         }
     }
 
-    const { resposta } = resultado;
+    console.log(resultado.mensagem);
 
-    console.log(resposta);
+    const { resposta } = resultado;
 
     const aulasDeMatematica: Aulas = [];
     const aulasDeHistoria: Aulas = []
@@ -187,6 +187,13 @@ export const registrarAula = async (config: ConfigAula) => {
                 break;
         }
     })
+
+    console.log("Aulas de Matematica: " + aulasDeMatematica);
+    console.log("Aulas de Portugues: " + aulasDePortugues);
+    console.log("Aulas de Historia: " + aulasDeHistoria);
+    console.log("Aulas de Geografia: " + aulasDeGeografia);
+    console.log("Aulas de Arte: " + aulasDeArte);
+    console.log("Aulas de Ciencias: " + aulasDeCiencias);
 
     console.log("Manipulando resposta...");
 

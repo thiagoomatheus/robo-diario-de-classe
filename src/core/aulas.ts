@@ -49,6 +49,8 @@ export const registrarAula = async (config: ConfigAula) => {
     }[] = [];
   
     for (let i = 1; materias.length < quantidadeMaterias; i++) {
+
+        console.log(`Materia: ${i}/${quantidadeMaterias}`);
     
         try {
             
@@ -134,6 +136,8 @@ export const registrarAula = async (config: ConfigAula) => {
   
     console.log(materias);
 
+    console.log(`Analisando cronograma...`);
+
     const resultado = await analisePorCronograma({
         materias,
         linkCronograma
@@ -184,6 +188,8 @@ export const registrarAula = async (config: ConfigAula) => {
         }
     })
 
+    console.log("Manipulando resposta...");
+
     for (let i = 1; materias.length < quantidadeMaterias; i++) {
 
         let aulas: Aulas = []
@@ -219,6 +225,8 @@ export const registrarAula = async (config: ConfigAula) => {
                 waitUntil: 'networkidle0'
             })
 
+            console.log(`Selecionando materia de ${aulas[0].materia}`);
+            
             const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
 
             if (!resultadoSelecionarMateria.sucesso) {
@@ -240,14 +248,18 @@ export const registrarAula = async (config: ConfigAula) => {
 
             try {
                 console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
-    
+
+                console.log(`Selecionando bimestre ${bimestre}`);
+                
                 const resultadoSelecionarBimestre = await selecionarBimestre(page, bimestre);
     
                 if (!resultadoSelecionarBimestre.sucesso) {
                     console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + resultadoSelecionarBimestre.mensagem);
                     return;
                 }
-    
+
+                console.log(`Selecionando data ${aula.dia}`);
+                
                 const dataAtiva = await selecionandoData(page, aula.dia, "frequencia", {
                     DATE_SELECTOR: ``,
                     DATE_TD_SELECTOR: ``,
@@ -261,14 +273,20 @@ export const registrarAula = async (config: ConfigAula) => {
     
                 await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
 
+                console.log(`Selecionando horário`);
+
                 await abrindoSeletorHorario(page);
 
                 await selecionandoHorario(page, "todos");
+
+                console.log("Selecionando exibição de 100 habilidades");
 
                 await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
 
                 await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
 
+                console.log("Inserindo habilidades");
+                
                 await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
 
                 aula.habilidades.map(async (habilidade) => {
@@ -277,14 +295,17 @@ export const registrarAula = async (config: ConfigAula) => {
                     await clickComEvaluate(page, '#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input');
                 })
 
-                await page.waitForSelector('#txtBreveResumo')
+                console.log("Inserindo descricao da aula");
+
+                await page.waitForSelector('#txtBreveResumo');
 
                 await page.type('#txtBreveResumo', aula.descricao);
 
-                await clickComEvaluate(page, '#btnSalvarCadastro')
+                console.log("Salvando aula");
 
-                await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar')
-                
+                await clickComEvaluate(page, '#btnSalvarCadastro');
+
+                await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
                 
             } catch (error) {
                 console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);

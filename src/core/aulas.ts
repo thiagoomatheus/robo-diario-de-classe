@@ -150,6 +150,8 @@ export const registrarAula = async (config: ConfigAula) => {
 
     const { resposta } = resultado;
 
+    console.log(resposta);
+
     const aulasDeMatematica: Aulas = [];
     const aulasDeHistoria: Aulas = []
     const aulasDePortugues: Aulas = []

@@ -481,9 +481,12 @@ export default async function routes(app: FastifyTypedInstance) {
       console.log("Aulas registradas com sucesso");
       
     } catch (error) {
+
+      console.log("Erro ao registrar aulas:", error);
+      
       return reply.status(500).send({
         sucesso: false,
-        mensagem: "Erro ao marcar frequencia. Tente novamente mais tarde!"
+        mensagem: "Erro ao registrar aulas. Tente novamente mais tarde!"
       })
     }
 

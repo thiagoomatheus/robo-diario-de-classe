@@ -126,6 +126,8 @@ Aguarde o envio do cronograma em PDF e a lista de habilidades do Currículo Paul
     }
   }
 
+  console.log(`Resposta obtida: ${response.text}`);
+  
   return {
     sucesso: true,
     mensagem: "Resposta obtida com sucesso",

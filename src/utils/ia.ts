@@ -1,4 +1,4 @@
-import { ContentListUnion, GenerateContentConfig, GoogleGenAI } from "@google/genai";
+import { ContentListUnion, GenerateContentConfig, GoogleGenAI, Type } from "@google/genai";
 
 type AnaliseCronogramaProps = {
   materias: {
@@ -66,10 +66,10 @@ Apresente a resposta em um formato organizado (como uma lista de objetos JSON ou
 
 [
   {
-    "Dia": "[Data do dia]",
-    "Matéria": "[Nome da Matéria consolidada para este dia]",
-    "Descrição da Aula": "[Resumo CONSOLIDADO das atividades/tópicos desta matéria para este dia]",
-    "Habilidades": [
+    "dia": "[Data do dia]",
+    "materia": "[Nome da Matéria consolidada para este dia]",
+    "descricao": "[Resumo CONSOLIDADO das atividades/tópicos desta matéria para este dia]",
+    "habilidades": [
       "Código da habilidade 1",
       // ... lista dos códigos de habilidades selecionados para esta matéria NESTE DIA ...
     ]
@@ -82,6 +82,18 @@ Preparação:
 Aguarde o envio do cronograma em PDF e a lista de habilidades do Currículo Paulista para iniciar a análise.`,
         }
     ],
+    responseSchema: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          dia: { type: Type.STRING },
+          materia: { type: Type.STRING },
+          descricao: { type: Type.STRING },
+          habilidades: { type: Type.ARRAY, items: { type: Type.STRING } },
+        },
+      }
+    }
   };
   const model = 'gemini-2.5-flash-preview-04-17';
   const contents: ContentListUnion = [

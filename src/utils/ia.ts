@@ -111,8 +111,6 @@ Aguarde o envio do cronograma em PDF e a lista de habilidades do Currículo Paul
       mensagem: "Erro ao obter resposta da IA"
     }
   }
-
-  console.log(`Resposta obtida: ${response.text}`);
   
   return {
     sucesso: true,

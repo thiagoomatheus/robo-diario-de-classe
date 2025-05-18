@@ -152,11 +152,11 @@ export const registrarAula = async (config: ConfigAula) => {
         }
     }
 
-    console.log(resultado.mensagem);
-
     const { resposta } = resultado;
 
     console.log(resposta);
+    
+    console.log("Manipulando resposta...");
     
     const aulasDeMatematica: Aulas = [];
     const aulasDeHistoria: Aulas = []
@@ -190,131 +190,142 @@ export const registrarAula = async (config: ConfigAula) => {
         }
     })
 
-    console.log("Manipulando resposta...");
+    try {
 
-    for (let i = 1; materias.length < quantidadeMaterias; i++) {
-
-        let aulas: Aulas = []
+        console.log("Iniciando registro de aulas...");
         
-        switch (i) {
-            case 1:
-                aulas = aulasDePortugues;
-                break;
-            case 2:
-                aulas = aulasDeArte;
-                break;
-            case 3:
-                aulas = aulasDeGeografia;
-                break;
-            case 4:
-                aulas = aulasDeHistoria;
-                break;
-            case 5:
-                aulas = aulasDeMatematica;
-                break;
-            case 6:
-                aulas = aulasDeCiencias;
-                break;
-            default:
-                break;
-        }
-
-        console.log(aulas);
         
-        try {
+        for (let iMateria = 1; materias.length < quantidadeMaterias; iMateria++) {
     
-            const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i}) .icone-tabela-visualizar`;
-
-            await page.goto(url, {
-                waitUntil: 'networkidle0'
-            })
-
-            console.log(`Selecionando materia de ${aulas[0].materia}`);
+            let aulas: Aulas = []
             
-            const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
-
-            if (!resultadoSelecionarMateria.sucesso) {
-                console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
-                continue;
+            switch (iMateria) {
+                case 1:
+                    aulas = aulasDePortugues;
+                    break;
+                case 2:
+                    aulas = aulasDeArte;
+                    break;
+                case 3:
+                    aulas = aulasDeGeografia;
+                    break;
+                case 4:
+                    aulas = aulasDeHistoria;
+                    break;
+                case 5:
+                    aulas = aulasDeMatematica;
+                    break;
+                case 6:
+                    aulas = aulasDeCiencias;
+                    break;
+                default:
+                    break;
             }
+    
+            console.log(aulas);
             
-        } catch (error) {
-
-            console.error(`Erro ao selecionar materia - Detalhe do erro:`, error);
-            return {
-                sucesso: false,
-                mensagem: `Erro ao selecionar materia - Detalhe do erro: ${error}`
-            }
-            
-        }
-
-        aulas.map(async (aula) => {
-
             try {
-                console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
-
-                console.log(`Selecionando bimestre ${bimestre}`);
-                
-                const resultadoSelecionarBimestre = await selecionarBimestre(page, bimestre);
+        
+                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${iMateria}) .icone-tabela-visualizar`;
     
-                if (!resultadoSelecionarBimestre.sucesso) {
-                    console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + resultadoSelecionarBimestre.mensagem);
-                    return;
-                }
-
-                console.log(`Selecionando data ${aula.dia}`);
-                
-                const dataAtiva = await selecionandoData(page, aula.dia, "frequencia", {
-                    DATE_SELECTOR: ``,
-                    DATE_TD_SELECTOR: ``,
-                    DATEPICKER_SELECTOR: ".datepicker"
-                });
-            
-                if (!dataAtiva.sucesso) {
-                    console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
-                    return;
-                }
-    
-                await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
-
-                console.log(`Selecionando horário`);
-
-                await abrindoSeletorHorario(page);
-
-                await selecionandoHorario(page, "todos");
-
-                console.log("Selecionando exibição de 100 habilidades");
-
-                await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
-
-                await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
-
-                console.log("Inserindo habilidades");
-                
-                await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
-
-                aula.habilidades.map(async (habilidade) => {
-                    await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidade);
-
-                    await clickComEvaluate(page, '#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input');
+                await page.goto(url, {
+                    waitUntil: 'networkidle0'
                 })
-
-                console.log("Inserindo descricao da aula");
-
-                await page.waitForSelector('#txtBreveResumo');
-
-                await page.type('#txtBreveResumo', aula.descricao);
-
-                console.log("Salvando aula");
-
-                await clickComEvaluate(page, '#btnSalvarCadastro');
-
-                await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
+    
+                console.log(`Selecionando materia de ${aulas[0].materia}`);
+                
+                const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
+    
+                if (!resultadoSelecionarMateria.sucesso) {
+                    console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
+                    continue;
+                }
                 
             } catch (error) {
-                console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);
+    
+                console.error(`Erro ao selecionar materia - Detalhe do erro:`, error);
+                return {
+                    sucesso: false,
+                    mensagem: `Erro ao selecionar materia - Detalhe do erro: ${error}`
+                }
+                
             }
-        })
+    
+            aulas.map(async (aula) => {
+    
+                try {
+                    console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
+    
+                    console.log(`Selecionando bimestre ${bimestre}`);
+                    
+                    const resultadoSelecionarBimestre = await selecionarBimestre(page, bimestre);
+        
+                    if (!resultadoSelecionarBimestre.sucesso) {
+                        console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + resultadoSelecionarBimestre.mensagem);
+                        return;
+                    }
+    
+                    console.log(`Selecionando data ${aula.dia}`);
+                    
+                    const dataAtiva = await selecionandoData(page, aula.dia, "frequencia", {
+                        DATE_SELECTOR: ``,
+                        DATE_TD_SELECTOR: ``,
+                        DATEPICKER_SELECTOR: ".datepicker"
+                    });
+                
+                    if (!dataAtiva.sucesso) {
+                        console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
+                        return;
+                    }
+        
+                    await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
+    
+                    console.log(`Selecionando horário`);
+    
+                    await abrindoSeletorHorario(page);
+    
+                    await selecionandoHorario(page, "todos");
+    
+                    console.log("Selecionando exibição de 100 habilidades");
+    
+                    await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
+    
+                    await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
+    
+                    console.log("Inserindo habilidades");
+                    
+                    await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
+    
+                    aula.habilidades.map(async (habilidade) => {
+                        await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidade);
+    
+                        await clickComEvaluate(page, '#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input');
+                    })
+    
+                    console.log("Inserindo descricao da aula");
+    
+                    await page.waitForSelector('#txtBreveResumo');
+    
+                    await page.type('#txtBreveResumo', aula.descricao);
+    
+                    console.log("Salvando aula");
+    
+                    await clickComEvaluate(page, '#btnSalvarCadastro');
+    
+                    await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
+                    
+                } catch (error) {
+                    console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);
+                }
+            })
+        }
+    } catch (error) {
+        console.error(`Não foi possível iterar sobre aulas - Detalhe do erro:`, error);
+        
+        return {
+            sucesso: false,
+            mensagem: `Não foi possível iterar sobre aulas - Detalhe do erro: ${error}`
+        }
     }
   
     await browser?.close();

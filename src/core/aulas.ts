@@ -190,13 +190,6 @@ export const registrarAula = async (config: ConfigAula) => {
         }
     })
 
-    console.log("Aulas de Matematica: " + aulasDeMatematica);
-    console.log("Aulas de Portugues: " + aulasDePortugues);
-    console.log("Aulas de Historia: " + aulasDeHistoria);
-    console.log("Aulas de Geografia: " + aulasDeGeografia);
-    console.log("Aulas de Arte: " + aulasDeArte);
-    console.log("Aulas de Ciencias: " + aulasDeCiencias);
-
     console.log("Manipulando resposta...");
 
     for (let i = 1; materias.length < quantidadeMaterias; i++) {
@@ -226,6 +219,8 @@ export const registrarAula = async (config: ConfigAula) => {
                 break;
         }
 
+        console.log(aulas);
+        
         try {
     
             const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i}) .icone-tabela-visualizar`;

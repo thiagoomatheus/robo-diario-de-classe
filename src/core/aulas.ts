@@ -167,22 +167,22 @@ export const registrarAula = async (config: ConfigAula) => {
 
     resposta.map((aula) => {
         switch (aula.materia) {
-            case 'Matemática':
+            case 'MATEMATICA':
                 aulasDeMatematica.push(aula);
                 break;
-            case 'Língua Portuguesa':
+            case 'LINGUA PORTUGUESA':
                 aulasDePortugues.push(aula);
                 break;
-            case 'História':
+            case 'HISTORIA':
                 aulasDeHistoria.push(aula);
                 break;
-            case 'Geografia':
+            case 'GEOGRAFIA':
                 aulasDeGeografia.push(aula);
                 break;
-            case 'Arte':
+            case 'ARTE':
                 aulasDeArte.push(aula);
                 break;
-            case 'Ciências':
+            case 'CIENCIAS':
                 aulasDeCiencias.push(aula);
                 break;
             default:

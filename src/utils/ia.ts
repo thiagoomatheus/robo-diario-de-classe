@@ -62,21 +62,7 @@ Mantenha a Coerência: As habilidades selecionadas para a entrada consolidada de
 Selecione apenas os códigos fornecidos: Não invente ou sugira códigos de habilidades que não estejam na lista fornecida.
 Currículo Paulista: As habilidades a serem selecionadas são do Currículo Paulista, e não da BNCC.
 Formato de Resposta:
-Apresente a resposta em um formato organizado (como uma lista de objetos JSON ou similar) que contenha uma entrada para cada matéria (exceto EPA e Educação Física) em cada dia da semana EM QUE HOUVE AULA VÁLIDA. A lista deve estar ordenada cronologicamente por dia. Para cada entrada consolidada, inclua:
-
-[
-  {
-    "dia": "[Data do dia]",
-    "materia": "[Nome da Matéria consolidada para este dia]",
-    "descricao": "[Resumo CONSOLIDADO das atividades/tópicos desta matéria para este dia]",
-    "habilidades": [
-      "Código da habilidade 1",
-      // ... lista dos códigos de habilidades selecionados para esta matéria NESTE DIA ...
-    ]
-  },
-  // ... Próxima entrada para a próxima matéria neste dia (se houver) ...
-  // ... Próxima entrada para a primeira matéria do próximo dia COM AULA VÁLIDA ...
-]
+Apresente a resposta em um formato organizado (como uma lista de objetos JSON ou similar) que contenha uma entrada para cada matéria (exceto EPA e Educação Física) em cada dia da semana EM QUE HOUVE AULA VÁLIDA. A lista deve estar ordenada cronologicamente por dia. 
 
 Preparação:
 Aguarde o envio do cronograma em PDF e a lista de habilidades do Currículo Paulista para iniciar a análise.`,

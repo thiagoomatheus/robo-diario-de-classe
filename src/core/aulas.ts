@@ -194,12 +194,11 @@ export const registrarAula = async (config: ConfigAula) => {
 
         console.log("Iniciando registro de aulas...");
         
-        
-        for (let iMateria = 1; materias.length < quantidadeMaterias; iMateria++) {
+        for (let i = 1; i < materias.length; i++) {
     
             let aulas: Aulas = []
             
-            switch (iMateria) {
+            switch (i) {
                 case 1:
                     aulas = aulasDePortugues;
                     break;
@@ -226,7 +225,7 @@ export const registrarAula = async (config: ConfigAula) => {
             
             try {
         
-                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${iMateria}) .icone-tabela-visualizar`;
+                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i}) .icone-tabela-visualizar`;
     
                 await page.goto(url, {
                     waitUntil: 'networkidle0'

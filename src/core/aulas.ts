@@ -256,12 +256,12 @@ export const registrarAula = async (config: ConfigAula) => {
                     console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
     
                     console.log(`Selecionando bimestre ${bimestre}`);
-                    
-                    const resultadoSelecionarBimestre = await selecionarBimestre(page, bimestre);
-        
-                    if (!resultadoSelecionarBimestre.sucesso) {
-                        console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + resultadoSelecionarBimestre.mensagem);
-                        return;
+
+                    try {
+                        await selecionarBimestre(page, bimestre);
+                    } catch (error: any) {
+                        console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem);
+                        throw ("Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem);
                     }
     
                     console.log(`Selecionando data ${aula.dia}`);
@@ -315,6 +315,7 @@ export const registrarAula = async (config: ConfigAula) => {
                     
                 } catch (error) {
                     console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);
+                    throw ("Erro ao adicionar aula de " + aula.materia + " - Detalhe do erro: " + error);
                 }
             })
         }

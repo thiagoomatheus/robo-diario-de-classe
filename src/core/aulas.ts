@@ -261,12 +261,15 @@ export const registrarAula = async (config: ConfigAula) => {
                         await selecionarBimestre(page, bimestre);
                     } catch (error: any) {
                         console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem);
-                        break;
+                        return {
+                            sucesso: false,
+                            mensagem: "Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem
+                        }
                     }
     
                     console.log(`Selecionando data ${aulas[j].dia}`);
                     
-                    const dataAtiva = await selecionandoData(page, aulas[j].dia, "frequencia", {
+                    const dataAtiva = await selecionandoData(page, aulas[j].dia, "aula", {
                         DATE_SELECTOR: ``,
                         DATE_TD_SELECTOR: ``,
                         DATEPICKER_SELECTOR: ".datepicker"
@@ -274,7 +277,10 @@ export const registrarAula = async (config: ConfigAula) => {
                 
                     if (!dataAtiva.sucesso) {
                         console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
-                        break;
+                        return {
+                            sucesso: false,
+                            mensagem: `Data inválida. Causa: ${dataAtiva.mensagem}`
+                        }
                     }
         
                     await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
@@ -315,7 +321,10 @@ export const registrarAula = async (config: ConfigAula) => {
                     
                 } catch (error) {
                     console.error(`Erro ao adicionar aula de ${aulas[j].materia} - Detalhe do erro:`, error);
-                    throw ("Erro ao adicionar aula de " + aulas[j].materia + " - Detalhe do erro: " + error);
+                    return {
+                        sucesso: false,
+                        mensagem: `Erro ao adicionar aula de ${aulas[j].materia} - Detalhe do erro: ${error}`
+                    }
                 }
             }
         }

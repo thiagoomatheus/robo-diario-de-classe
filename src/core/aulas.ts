@@ -252,8 +252,10 @@ export const registrarAula = async (config: ConfigAula) => {
 
             for (let j = 0; j <= aulas.length; j++) {
 
+                let aula = aulas[j];
+
                 try {
-                    console.log(`Adicionando aula de ${aulas[j].materia} - ${aulas[j].dia}`);
+                    console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
     
                     console.log(`Selecionando bimestre ${bimestre}`);
     
@@ -267,9 +269,9 @@ export const registrarAula = async (config: ConfigAula) => {
                         }
                     }
     
-                    console.log(`Selecionando data ${aulas[j].dia}`);
+                    console.log(`Selecionando data ${aula.dia}`);
                     
-                    const dataAtiva = await selecionandoData(page, aulas[j].dia, "aula", {
+                    const dataAtiva = await selecionandoData(page, aula.dia, "aula", {
                         DATE_SELECTOR: ``,
                         DATE_TD_SELECTOR: ``,
                         DATEPICKER_SELECTOR: ".datepicker"
@@ -300,18 +302,20 @@ export const registrarAula = async (config: ConfigAula) => {
                     console.log("Inserindo habilidades");
                     
                     await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
-    
-                    aulas[j].habilidades.map(async (habilidade) => {
-                        await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidade);
+
+                    let habilidades = aula.habilidades;
+
+                    for (let k = 0; k < habilidades.length; k++) {
+                        await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidades[k]);
     
                         await clickComEvaluate(page, '#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input');
-                    })
+                    }
     
                     console.log("Inserindo descricao da aula");
     
                     await page.waitForSelector('#txtBreveResumo');
     
-                    await page.type('#txtBreveResumo', aulas[j].descricao);
+                    await page.type('#txtBreveResumo', aula.descricao);
     
                     console.log("Salvando aula");
     
@@ -320,10 +324,10 @@ export const registrarAula = async (config: ConfigAula) => {
                     await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
                     
                 } catch (error) {
-                    console.error(`Erro ao adicionar aula de ${aulas[j].materia} - Detalhe do erro:`, error);
+                    console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);
                     return {
                         sucesso: false,
-                        mensagem: `Erro ao adicionar aula de ${aulas[j].materia} - Detalhe do erro: ${error}`
+                        mensagem: `Erro ao adicionar aula de ${aula.materia} - Detalhe do erro: ${error}`
                     }
                 }
             }

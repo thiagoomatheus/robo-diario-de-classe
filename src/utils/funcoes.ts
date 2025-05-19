@@ -243,13 +243,12 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
     }
   }
     
-  await page.waitForSelector(DATE_TD_SELECTOR);
-
   try {
     console.log("Verificando se data informada está ativa");
-
+    
     switch (tipo) {
       case "frequencia":
+        await page.waitForSelector(DATE_TD_SELECTOR);
 
         await page.evaluate((DATE_TD_SELECTOR) => {
   

@@ -1,4 +1,4 @@
-import { abrindoSeletorHorario, clickComEvaluate, iniciar, selecionandoData, selecionandoHorario, selecionarBimestre, selecionarMateria } from "../utils/funcoes"
+import { abrindoSeletorHorario, clickComEvaluate, iniciar, navegarParaUrl, selecionandoData, selecionandoHorario, selecionarBimestre, selecionarMateria } from "../utils/funcoes"
 import { analisePorCronograma, Aulas } from "../utils/ia"
 
 type ConfigAula = {
@@ -227,9 +227,9 @@ export const registrarAula = async (config: ConfigAula) => {
         
                 const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i}) .icone-tabela-visualizar`;
     
-                await page.goto(url, {
-                    waitUntil: 'networkidle0'
-                })
+                await navegarParaUrl(page, url);
+
+                await page.waitForSelector(MATERIA_SELECTOR);
     
                 console.log(`Selecionando materia de ${aulas[0].materia}`);
                 
@@ -249,24 +249,24 @@ export const registrarAula = async (config: ConfigAula) => {
                 }
                 
             }
-    
-            aulas.forEach(async (aula) => {
-    
+
+            for (let j = 0; j <= aulas.length; j++) {
+
                 try {
-                    console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
+                    console.log(`Adicionando aula de ${aulas[j].materia} - ${aulas[j].dia}`);
     
                     console.log(`Selecionando bimestre ${bimestre}`);
-
+    
                     try {
                         await selecionarBimestre(page, bimestre);
                     } catch (error: any) {
                         console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem);
-                        throw ("Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem);
+                        break;
                     }
     
-                    console.log(`Selecionando data ${aula.dia}`);
+                    console.log(`Selecionando data ${aulas[j].dia}`);
                     
-                    const dataAtiva = await selecionandoData(page, aula.dia, "frequencia", {
+                    const dataAtiva = await selecionandoData(page, aulas[j].dia, "frequencia", {
                         DATE_SELECTOR: ``,
                         DATE_TD_SELECTOR: ``,
                         DATEPICKER_SELECTOR: ".datepicker"
@@ -274,7 +274,7 @@ export const registrarAula = async (config: ConfigAula) => {
                 
                     if (!dataAtiva.sucesso) {
                         console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
-                        return;
+                        break;
                     }
         
                     await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
@@ -295,7 +295,7 @@ export const registrarAula = async (config: ConfigAula) => {
                     
                     await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
     
-                    aula.habilidades.map(async (habilidade) => {
+                    aulas[j].habilidades.map(async (habilidade) => {
                         await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidade);
     
                         await clickComEvaluate(page, '#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input');
@@ -305,7 +305,7 @@ export const registrarAula = async (config: ConfigAula) => {
     
                     await page.waitForSelector('#txtBreveResumo');
     
-                    await page.type('#txtBreveResumo', aula.descricao);
+                    await page.type('#txtBreveResumo', aulas[j].descricao);
     
                     console.log("Salvando aula");
     
@@ -314,10 +314,10 @@ export const registrarAula = async (config: ConfigAula) => {
                     await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
                     
                 } catch (error) {
-                    console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);
-                    throw ("Erro ao adicionar aula de " + aula.materia + " - Detalhe do erro: " + error);
+                    console.error(`Erro ao adicionar aula de ${aulas[j].materia} - Detalhe do erro:`, error);
+                    throw ("Erro ao adicionar aula de " + aulas[j].materia + " - Detalhe do erro: " + error);
                 }
-            })
+            }
         }
     } catch (error) {
         console.error(`Não foi possível iterar sobre aulas - Detalhe do erro:`, error);

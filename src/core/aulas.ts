@@ -250,7 +250,7 @@ export const registrarAula = async (config: ConfigAula) => {
                 
             }
     
-            aulas.map(async (aula) => {
+            aulas.forEach(async (aula) => {
     
                 try {
                     console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);

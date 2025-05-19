@@ -260,7 +260,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
         break;
     
       case "aula":
-        await page.evaluate((addDays) => {
+        await page.evaluate((addDays, dataEmFormatoCorreto) => {
           
           const elemento = (document.querySelectorAll('.ui-state-default').item(addDays(dataEmFormatoCorreto, 1).getDate())) as HTMLElement;
 
@@ -291,7 +291,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
               mensagem: `Data já possui registro de aula!`
             }
           }
-        }, addDays);
+        }, addDays, dataEmFormatoCorreto);
 
       break;
     }
@@ -319,11 +319,11 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
         break;
     
       case "aula":
-        await page.evaluate((subDays) => {
+        await page.evaluate((subDays, dataEmFormatoCorreto) => {
           const elemento = (document.querySelectorAll('.ui-state-default').item(subDays(dataEmFormatoCorreto, 1).getDate())) as HTMLElement;
 
           elemento.click();
-        }, subDays);
+        }, subDays, dataEmFormatoCorreto);
 
         await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
 

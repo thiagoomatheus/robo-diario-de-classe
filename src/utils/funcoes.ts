@@ -358,13 +358,19 @@ export async function selecionarBimestre(page: Page, bimestre:string) {
 
     }, 3000) */
 
-    await page.waitForSelector(`#bimestres option[value="${bimestre}"]`, {timeout: 5000});
+    await page.waitForSelector(`#bimestres option[value="${bimestre}"]`, {timeout: 5000})
+    .then(async () => {
 
-    await clickComEvaluate(page, `#bimestres option[value="${bimestre}"]`);
-    
-    await page.waitForSelector(`#hdfFiltroBimestre[value="${bimestre}"]`);
-
-    console.log(`Bimestre: ${bimestre}`);
+      await clickComEvaluate(page, `#bimestres option[value="${bimestre}"]`);
+      
+      await page.waitForSelector(`#hdfFiltroBimestre[value="${bimestre}"]`);
+  
+      console.log(`Bimestre: ${bimestre}`);
+    })
+    .catch(error => {
+      console.error(`Erro ao selecionar bimestre - Detalhe do erro:`, error);
+      throw new Error(error);
+    })
 
   } catch (error) {
       console.error(`Erro ao selecionar bimestre - Detalhe do erro:`, error);

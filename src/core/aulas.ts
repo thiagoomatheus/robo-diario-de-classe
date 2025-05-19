@@ -222,6 +222,13 @@ export const registrarAula = async (config: ConfigAula) => {
             }
     
             console.log(aulas);
+
+            if (aulas.length === 0) {
+
+                console.log(`Nenhuma aula encontrada para ${materias[i].materia}`);
+
+                continue;
+            }
             
             try {
         

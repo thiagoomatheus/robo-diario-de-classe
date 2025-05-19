@@ -1,5 +1,5 @@
 import puppeteer, { Browser, Page } from "puppeteer";
-import { ANTERIOR_SELECTOR, BUTTON_SELECTOR, DATEPICKER_SELECTOR, HORARIO_SELECTOR, INPUT_DATE_SELECTOR, LOGIN_SELECTOR, PASSWORD_SELECTOR, TIMEPICKER_SELECTOR } from "./seletores";
+import { ANTERIOR_SELECTOR, BUTTON_SELECTOR, HORARIO_SELECTOR, INPUT_DATE_SELECTOR, LOGIN_SELECTOR, PASSWORD_SELECTOR, TIMEPICKER_SELECTOR } from "./seletores";
 import { addDays, differenceInCalendarMonths, isThisMonth, parse, subDays } from "date-fns";
 
 type ConfigIniciar = {
@@ -260,9 +260,12 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
         break;
     
       case "aula":
-        await page.evaluate((dataEmFormatoCorreto) => {
+
+        const indice = addDays(dataEmFormatoCorreto, 1).getDay();
+
+        await page.evaluate((indice) => {
           
-          const elemento = (document.querySelectorAll('.ui-state-default').item(addDays(dataEmFormatoCorreto, 1).getDate())) as HTMLElement;
+          const elemento = (document.querySelectorAll('.ui-state-default').item(indice)) as HTMLElement;
 
           if (elemento.classList.contains('ui-datepicker-week-end')) {
             return {
@@ -291,7 +294,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
               mensagem: `Data já possui registro de aula!`
             }
           }
-        }, dataEmFormatoCorreto);
+        }, indice);
 
       break;
     }
@@ -319,11 +322,14 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
         break;
     
       case "aula":
-        await page.evaluate((dataEmFormatoCorreto) => {
-          const elemento = (document.querySelectorAll('.ui-state-default').item(subDays(dataEmFormatoCorreto, 1).getDate())) as HTMLElement;
+      
+        const indice = subDays(dataEmFormatoCorreto, 1).getDate()
+
+        await page.evaluate((indice) => {
+          const elemento = (document.querySelectorAll('.ui-state-default').item(indice)) as HTMLElement;
 
           elemento.click();
-        }, dataEmFormatoCorreto);
+        }, indice);
 
         await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
 

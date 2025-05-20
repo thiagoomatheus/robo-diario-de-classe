@@ -1,3 +1,4 @@
+import { HTTPResponse } from "puppeteer"
 import { abrindoSeletorHorario, clickComEvaluate, iniciar, navegarParaUrl, selecionandoData, selecionandoHorario, selecionarBimestre, selecionarMateria } from "../utils/funcoes"
 import { analisePorCronograma, Aulas } from "../utils/ia"
 
@@ -322,10 +323,58 @@ export const registrarAula = async (config: ConfigAula) => {
                     await page.type('#txtBreveResumo', aula.descricao);
     
                     console.log("Salvando aula");
-    
-                    page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
+
+                    const targetUrl = 'https://sed.educacao.sp.gov.br/RegistroAula/Salvar';
                     
+                    const apiResponsePromise = new Promise((resolve, reject) => {
+                        
+                        const responseHandler = async (response: HTTPResponse) => {
+                            const responseUrl = response.url();
+                            const status = response.status();
+                            
+                            if (responseUrl.includes(targetUrl) && status >= 200 && status < 300) {
+                                console.log(`🎉 API response SUCCESS! URL: ${responseUrl}, Status: ${status}`);
+                                
+                                page.off('response', responseHandler);
+                                resolve(response);
+                            }
+                            
+                            else if (responseUrl.includes(targetUrl) && status >= 400) {
+                                console.warn(`⚠️ API response ERROR! URL: ${responseUrl}, Status: ${status}`);
+                                
+                                page.off('response', responseHandler);
+                                
+                                reject(new Error(`API retornou status de erro ${status} para ${responseUrl}`));
+                            }
+                            
+                        };
+                        
+                        page.on('response', responseHandler);
+
+                        const timeout = 30000;
+                        const timeoutId = setTimeout(() => {
+                            
+                            page.off('response', responseHandler);
+                            reject(new Error(`Timeout de ${timeout}ms excedido esperando pela resposta da API: ${targetUrl}`));
+                        }, timeout);
+                        
+                        apiResponsePromise.finally(() => clearTimeout(timeoutId));
+                    });
+
+                    console.log(`Clicando no botão para salvar...`);
+
                     await clickComEvaluate(page, '#btnSalvarCadastro');
+
+                    console.log('Esperando pela resposta da API...');
+
+                    try {
+                        const apiResponse = await apiResponsePromise;
+
+                        console.log('✅ Operação de salvamento confirmada pela API. Prosseguindo...');
+
+                    } catch (error) {
+                        console.error('❌ Falha na operação de salvamento ou timeout:', error);
+                    }
                     
                 } catch (error) {
                     console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);

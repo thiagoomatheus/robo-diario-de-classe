@@ -307,8 +307,12 @@ export const registrarAula = async (config: ConfigAula) => {
 
                     for (let k = 0; k < habilidades.length; k++) {
                         await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidades[k]);
-    
-                        await clickComEvaluate(page, '#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input');
+
+                        const elemento = await page.$(`#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
+
+                        if (elemento) {
+                            elemento.click();
+                        }
                     }
     
                     console.log("Inserindo descricao da aula");

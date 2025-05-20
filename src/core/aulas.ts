@@ -311,7 +311,7 @@ export const registrarAula = async (config: ConfigAula) => {
                         const elemento = await page.$(`#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
 
                         if (elemento) {
-                            elemento.click();
+                            await clickComEvaluate(page, `#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
                         }
                     }
     
@@ -323,9 +323,9 @@ export const registrarAula = async (config: ConfigAula) => {
     
                     console.log("Salvando aula");
     
+                    page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
+                    
                     await clickComEvaluate(page, '#btnSalvarCadastro');
-    
-                    await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
                     
                 } catch (error) {
                     console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);

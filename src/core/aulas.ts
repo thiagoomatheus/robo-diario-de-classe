@@ -327,6 +327,8 @@ export const registrarAula = async (config: ConfigAula) => {
                     const targetUrl = 'https://sed.educacao.sp.gov.br/RegistroAula/Salvar';
                     
                     const apiResponsePromise = new Promise((resolve, reject) => {
+
+                        let timeoutId: NodeJS.Timeout;
                         
                         const responseHandler = async (response: HTTPResponse) => {
                             const responseUrl = response.url();
@@ -335,12 +337,17 @@ export const registrarAula = async (config: ConfigAula) => {
                             if (responseUrl.includes(targetUrl) && status >= 200 && status < 300) {
                                 console.log(`🎉 API response SUCCESS! URL: ${responseUrl}, Status: ${status}`);
                                 
+                                clearTimeout(timeoutId);
+
                                 page.off('response', responseHandler);
+
                                 resolve(response);
                             }
                             
                             else if (responseUrl.includes(targetUrl) && status >= 400) {
                                 console.warn(`⚠️ API response ERROR! URL: ${responseUrl}, Status: ${status}`);
+
+                                clearTimeout(timeoutId);
                                 
                                 page.off('response', responseHandler);
                                 
@@ -352,13 +359,11 @@ export const registrarAula = async (config: ConfigAula) => {
                         page.on('response', responseHandler);
 
                         const timeout = 30000;
-                        const timeoutId = setTimeout(() => {
+                        timeoutId = setTimeout(() => {
                             
                             page.off('response', responseHandler);
                             reject(new Error(`Timeout de ${timeout}ms excedido esperando pela resposta da API: ${targetUrl}`));
                         }, timeout);
-                        
-                        apiResponsePromise.finally(() => clearTimeout(timeoutId));
                     });
 
                     console.log(`Clicando no botão para salvar...`);

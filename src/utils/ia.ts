@@ -81,7 +81,7 @@ Aguarde o envio do cronograma em PDF e a lista de habilidades do Currículo Paul
       }
     }
   };
-  const model = 'gemini-2.5-flash-preview-04-17';
+  const model = 'gemini-2.5-flash-preview-05-20';
   const contents: ContentListUnion = [
     {
       role: 'user',

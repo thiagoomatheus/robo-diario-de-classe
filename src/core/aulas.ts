@@ -209,7 +209,7 @@ export const registrarAula = async (config: ConfigAula) => {
 
             try {
         
-                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i}) .icone-tabela-visualizar`;
+                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i+1}) .icone-tabela-visualizar`;
     
                 await navegarParaUrl(page, url);
 

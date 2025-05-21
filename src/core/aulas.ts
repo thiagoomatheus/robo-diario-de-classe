@@ -153,11 +153,201 @@ export const registrarAula = async (config: ConfigAula) => {
         }
     }
 
-    const { resposta } = resultado;
+    const { resposta: aulas } = resultado;
 
-    console.log(resposta);
+    console.log(aulas);
+
+    try {
+
+/*         let targetUrl: string = "";
+
+        const apiResponsePromise = new Promise((resolve, reject) => {
+
+            let timeoutId: NodeJS.Timeout;
+            
+            const responseHandler = async (response: HTTPResponse) => {
+                const responseUrl = response.url();
+                const status = response.status();
+                
+                if (responseUrl.includes(targetUrl) && status >= 200 && status < 300) {
+                    console.log(`🎉 API response SUCCESS! URL: ${responseUrl}, Status: ${status}`);
+                    
+                    clearTimeout(timeoutId);
+
+                    page.off('response', responseHandler);
+
+                    resolve(response);
+                }
+                
+                else if (responseUrl.includes(targetUrl) && status >= 400) {
+                    console.warn(`⚠️ API response ERROR! URL: ${responseUrl}, Status: ${status}`);
+
+                    clearTimeout(timeoutId);
+                    
+                    page.off('response', responseHandler);
+                    
+                    reject(new Error(`API retornou status de erro ${status} para ${responseUrl}`));
+                }
+                
+            };
+            
+            page.on('response', responseHandler);
+
+            const timeout = 30000;
+            timeoutId = setTimeout(() => {
+                
+                page.off('response', responseHandler);
+                reject(new Error(`Timeout de ${timeout}ms excedido esperando pela resposta da API: ${targetUrl}`));
+            }, timeout);
+        }); */
+
+        console.log(`Registrando aulas...`);
+
+        for (let i = 0; i < aulas.length; i++) {
+
+            const aula = aulas[i];
+
+            try {
+        
+                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i}) .icone-tabela-visualizar`;
     
-    console.log("Manipulando resposta...");
+                await navegarParaUrl(page, url);
+
+                await page.waitForSelector(MATERIA_SELECTOR);
+    
+                console.log(`Selecionando materia de ${aula.materia}`);
+                
+                const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
+    
+                if (!resultadoSelecionarMateria.sucesso) {
+                    console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
+                    continue;
+                }
+                
+            } catch (error) {
+    
+                console.error(`Erro ao selecionar materia - Detalhe do erro:`, error);
+                return {
+                    sucesso: false,
+                    mensagem: `Erro ao selecionar materia - Detalhe do erro: ${error}`
+                }
+                
+            }
+
+            try {
+                console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
+
+                console.log(`Selecionando bimestre ${bimestre}`);
+
+                try {
+                    await selecionarBimestre(page, bimestre);
+                } catch (error: any) {
+                    console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem);
+                    return {
+                        sucesso: false,
+                        mensagem: "Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem
+                    }
+                }
+
+                console.log(`Selecionando data ${aula.dia}`);
+                
+                const dataAtiva = await selecionandoData(page, aula.dia, "aula", {
+                    DATE_SELECTOR: ``,
+                    DATE_TD_SELECTOR: ``,
+                    DATEPICKER_SELECTOR: ".datepicker"
+                });
+            
+                if (!dataAtiva.sucesso) {
+                    console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
+                    return {
+                        sucesso: false,
+                        mensagem: `Data inválida. Causa: ${dataAtiva.mensagem}`
+                    }
+                }
+    
+                await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
+
+                console.log(`Selecionando horário`);
+
+                await abrindoSeletorHorario(page);
+
+                await selecionandoHorario(page, "todos");
+
+                console.log("Selecionando exibição de 100 habilidades");
+
+                await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
+
+                await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
+
+                console.log("Inserindo habilidades");
+                
+                await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
+
+                let habilidades = aula.habilidades;
+
+                for (let k = 0; k < habilidades.length; k++) {
+                    await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidades[k]);
+
+                    const elemento = await page.$(`#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
+
+                    if (elemento) {
+                        await clickComEvaluate(page, `#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
+                    }
+                }
+
+                console.log("Inserindo descricao da aula");
+
+                await page.waitForSelector('#txtBreveResumo');
+
+                await page.type('#txtBreveResumo', aula.descricao);
+
+                console.log("Salvando aula");
+
+                console.log(`Clicando no botão para salvar...`);
+
+                /* targetUrl = 'https://sed.educacao.sp.gov.br/RegistroAula/Salvar'; */
+
+                await Promise.all([
+                    page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar'),
+                    clickComEvaluate(page, '#btnSalvarCadastro')
+                ])
+
+                /* await clickComEvaluate(page, '#btnSalvarCadastro');
+
+                console.log('Esperando pela resposta da API...');
+
+                await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar');
+
+                try {
+                    await apiResponsePromise;
+
+                    console.log('✅ Operação de salvamento confirmada pela API. Prosseguindo...');
+
+                } catch (error) {
+                    console.error('❌ Falha na operação de salvamento ou timeout:', error);
+                } */
+
+                console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso!`);
+                
+            } catch (error) {
+                console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);
+                return {
+                    sucesso: false,
+                    mensagem: `Erro ao adicionar aula de ${aula.materia} - Detalhe do erro: ${error}`
+                }
+            }
+        }
+    } catch (error) {
+        console.error(`Erro ao iterar sobre aulas - Detalhe do erro:`, error);
+
+        return {
+            sucesso: false,
+            mensagem: `Erro ao iterar sobre aulas - Detalhe do erro: ${error}`
+        }
+        
+    }
+    
+    /* console.log("Manipulando resposta...");
     
     const aulasDeMatematica: Aulas = [];
     const aulasDeHistoria: Aulas = []
@@ -166,7 +356,7 @@ export const registrarAula = async (config: ConfigAula) => {
     const aulasDeArte: Aulas = []
     const aulasDeCiencias: Aulas = []
 
-    resposta.map((aula) => {
+    aulas.map((aula) => {
         switch (aula.materia) {
             case 'MATEMATICA':
                 aulasDeMatematica.push(aula);
@@ -324,56 +514,16 @@ export const registrarAula = async (config: ConfigAula) => {
     
                     console.log("Salvando aula");
 
-                    const targetUrl = 'https://sed.educacao.sp.gov.br/RegistroAula/Salvar';
-                    
-                    const apiResponsePromise = new Promise((resolve, reject) => {
-
-                        let timeoutId: NodeJS.Timeout;
-                        
-                        const responseHandler = async (response: HTTPResponse) => {
-                            const responseUrl = response.url();
-                            const status = response.status();
-                            
-                            if (responseUrl.includes(targetUrl) && status >= 200 && status < 300) {
-                                console.log(`🎉 API response SUCCESS! URL: ${responseUrl}, Status: ${status}`);
-                                
-                                clearTimeout(timeoutId);
-
-                                page.off('response', responseHandler);
-
-                                resolve(response);
-                            }
-                            
-                            else if (responseUrl.includes(targetUrl) && status >= 400) {
-                                console.warn(`⚠️ API response ERROR! URL: ${responseUrl}, Status: ${status}`);
-
-                                clearTimeout(timeoutId);
-                                
-                                page.off('response', responseHandler);
-                                
-                                reject(new Error(`API retornou status de erro ${status} para ${responseUrl}`));
-                            }
-                            
-                        };
-                        
-                        page.on('response', responseHandler);
-
-                        const timeout = 30000;
-                        timeoutId = setTimeout(() => {
-                            
-                            page.off('response', responseHandler);
-                            reject(new Error(`Timeout de ${timeout}ms excedido esperando pela resposta da API: ${targetUrl}`));
-                        }, timeout);
-                    });
-
                     console.log(`Clicando no botão para salvar...`);
+
+                    targetUrl = 'https://sed.educacao.sp.gov.br/RegistroAula/Salvar';
 
                     await clickComEvaluate(page, '#btnSalvarCadastro');
 
                     console.log('Esperando pela resposta da API...');
 
                     try {
-                        const apiResponse = await apiResponsePromise;
+                        await apiResponsePromise;
 
                         console.log('✅ Operação de salvamento confirmada pela API. Prosseguindo...');
 
@@ -397,7 +547,7 @@ export const registrarAula = async (config: ConfigAula) => {
             sucesso: false,
             mensagem: `Não foi possível iterar sobre aulas - Detalhe do erro: ${error}`
         }
-    }
+    } */
   
     await browser?.close();
   

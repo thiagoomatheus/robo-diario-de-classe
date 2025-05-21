@@ -208,8 +208,10 @@ export const registrarAula = async (config: ConfigAula) => {
             const aula = aulas[i];
 
             try {
+
+                const indiceMateria = materias.findIndex(materia => materia.materia === aula.materia);
         
-                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${i+1}) .icone-tabela-visualizar`;
+                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${indiceMateria}) .icone-tabela-visualizar`;
     
                 await navegarParaUrl(page, url);
 

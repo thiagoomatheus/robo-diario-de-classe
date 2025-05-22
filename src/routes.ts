@@ -437,7 +437,12 @@ export default async function routes(app: FastifyTypedInstance) {
       response: {
         200: z.object({
           sucesso: z.boolean(),
-          mensagem: z.string()
+          mensagem: z.string(),
+          relatorio: z.object({
+            sucesso: z.number(),
+            falhas: z.number(),
+            logs: z.array(z.string())
+          })
         }),
         404: z.object({
           sucesso: z.boolean(),
@@ -461,6 +466,16 @@ export default async function routes(app: FastifyTypedInstance) {
         mensagem: 'Usuário não autenticado.',
       });
     }
+
+    let resposta = {
+      sucesso: false,
+      mensagem: "",
+      relatorio: {
+        sucesso: 0,
+        falhas: 0,
+        logs: ['']
+      }
+    }
       
     try {
   
@@ -471,12 +486,14 @@ export default async function routes(app: FastifyTypedInstance) {
         bimestre
       })
   
-      if (!resultado.sucesso) {
+      if (!resultado.sucesso || !resultado.relatorio) {
         return reply.status(404).send({
           sucesso: false,
           mensagem: resultado.mensagem
         });
       }
+
+      resposta = resultado
 
       console.log("Aulas registradas com sucesso");
       
@@ -492,10 +509,7 @@ export default async function routes(app: FastifyTypedInstance) {
 
     console.log("Registro de aulas concluido com sucesso");
     
-    return reply.status(200).send({
-      sucesso: true,
-      mensagem: "Registro de aulas concluído com sucesso!"
-    })
+    return reply.status(200).send(resposta)
       
   })
 

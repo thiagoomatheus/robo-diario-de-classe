@@ -1,4 +1,3 @@
-import { HTTPResponse } from "puppeteer"
 import { abrindoSeletorHorario, clickComEvaluate, iniciar, navegarParaUrl, selecionandoData, selecionandoHorario, selecionarBimestre, selecionarMateria } from "../utils/funcoes"
 import { analisePorCronograma, Aulas } from "../utils/ia"
 
@@ -157,174 +156,143 @@ export const registrarAula = async (config: ConfigAula) => {
 
     console.log(aulas);
 
+    let sucessoCount = 0;
+    let falhaCount = 0;
+    const logs: string[] = [];
+    let mensagemFinal = "";
+
     try {
-
         console.log(`Registrando aulas...`);
-
-        let i = 0
-
+    
+        let i = 0;
+    
         while (i < aulas.length) {
 
             const aula = aulas[i];
 
-            try {
+            const maximoTentativas = 3;
+            let tentativa = 1;
 
-                const indiceMateria = materias.findIndex(materia => materia.materia === aula.materia)
-        
-                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${indiceMateria + 1}) .icone-tabela-visualizar`;
-
-                console.log(`Indo para página de materia`);
+            let aulaRegistrada = false;
     
-                await navegarParaUrl(page, url);
-
-                await page.waitForSelector(MATERIA_SELECTOR);
+            console.log(`--- Iniciando registro para aula de ${aula.materia} - ${aula.dia} ---`);
     
-                console.log(`Selecionando materia de ${aula.materia}`);
-                
-                const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
+            while (tentativa <= maximoTentativas && !aulaRegistrada) {
+                console.log(`Tentativa: ${tentativa}/${maximoTentativas} para ${aula.materia} - ${aula.dia}`);
     
-                if (!resultadoSelecionarMateria.sucesso) {
-                    console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
-                    continue;
-                }
-                
-            } catch (error) {
-    
-                console.error(`Erro ao selecionar materia - Detalhe do erro:`, error);
-                return {
-                    sucesso: false,
-                    mensagem: `Erro ao selecionar materia - Detalhe do erro: ${error}`
-                }
-                
-            }
-
-            try {
-                console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
-
-                console.log(`Selecionando bimestre ${bimestre}`);
-
                 try {
+    
+                    const indiceMateria = materias.findIndex(materia => materia.materia === aula.materia);
+                    const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${indiceMateria + 1}) .icone-tabela-visualizar`;
+    
+                    console.log(`Indo para página de materia`);
+                    await navegarParaUrl(page, url);
+                    await page.waitForSelector(MATERIA_SELECTOR);
+
+                    console.log(`Selecionando materia de ${aula.materia}`);
+    
+                    const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
+                    if (!resultadoSelecionarMateria.sucesso) {
+                        console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
+                        throw new Error(resultadoSelecionarMateria.mensagem);
+                    }
+    
+                    console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
+    
+                    console.log(`Selecionando bimestre ${bimestre}`);
                     await selecionarBimestre(page, bimestre);
-                } catch (error: any) {
-                    console.warn("Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem);
-                    return {
-                        sucesso: false,
-                        mensagem: "Erro ao selecionar bimestre - Detalhe do erro: " + error.mensagem
+                    
+                    console.log(`Selecionando data ${aula.dia}`);
+                    const dataAtiva = await selecionandoData(page, aula.dia, "aula", {
+                        DATE_SELECTOR: ``,
+                        DATE_TD_SELECTOR: ``,
+                        DATEPICKER_SELECTOR: ".datepicker"
+                    });
+                    if (!dataAtiva.sucesso) {
+                        console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
+                        throw new Error(dataAtiva.mensagem);
                     }
-                }
-
-                console.log(`Selecionando data ${aula.dia}`);
-                
-                const dataAtiva = await selecionandoData(page, aula.dia, "aula", {
-                    DATE_SELECTOR: ``,
-                    DATE_TD_SELECTOR: ``,
-                    DATEPICKER_SELECTOR: ".datepicker"
-                });
-            
-                if (!dataAtiva.sucesso) {
-                    console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
-                    return {
-                        sucesso: false,
-                        mensagem: `Data inválida. Causa: ${dataAtiva.mensagem}`
-                    }
-                }
     
-                await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
-
-                try {
-
+                    await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
+    
                     console.log(`Selecionando horário`);
-    
                     await abrindoSeletorHorario(page);
-    
                     await selecionandoHorario(page, "todos");
                     
-                } catch (error) {
-                    console.error(`Erro ao selecionar horário - Detalhe do erro:`, error);
-                }
-
-                try {
-
                     console.log("Selecionando exibição de 100 habilidades");
-    
                     await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
-    
                     await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
                     
-                } catch (error) {
-                    console.error(`Erro ao selecionar exibição de 100 habilidades - Detalhe do erro:`, error);
-                }
-
-                try {
-                    
                     console.log("Inserindo habilidades");
-                    
                     await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
-    
                     let habilidades = aula.habilidades;
-    
                     for (let k = 0; k < habilidades.length; k++) {
                         await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidades[k]);
-    
                         const elemento = await page.$(`#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
-    
                         if (elemento) {
                             await clickComEvaluate(page, `#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
+                        } else {
+                            console.warn(`Habilidade "${habilidades[k]}" não encontrada. Prosseguindo.`);
                         }
+                        await page.type('#tblHabilidadeFundamento_filter input[type="search"]', '');
                     }
 
-                } catch (error) {
-                    console.error(`Erro ao inserir habilidades - Detalhe do erro:`, error);
-                }
-
-                try {
-                    
                     console.log("Inserindo descricao da aula");
-    
                     await page.waitForSelector('#txtBreveResumo');
-    
                     await page.type('#txtBreveResumo', aula.descricao);
-
-                } catch (error) {
-                    console.error(`Erro ao inserir descricao da aula - Detalhe do erro:`, error);
-                }
-                
-                try {
+                    
                     console.log("Salvando aula");
-    
                     console.log(`Clicando no botão para salvar...`);
-
+    
                     await Promise.all([
                         page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 30000 }),
-
                         page.waitForSelector('#btnSalvarCadastro', { visible: true }),
-
                         clickComEvaluate(page, '#btnSalvarCadastro')
-                    ])
-
-                    console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso!`);
-
-                    i++;
-                } catch (error) {
-                    console.warn(`Erro ao salvar aula - Detalhe do erro:`, error);
+                    ]);
+    
+                    console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso na tentativa ${tentativa}!`);
+                    aulaRegistrada = true;
+                    
+                } catch (error: any) {
+                    console.warn(`Falha na tentativa ${tentativa} para adicionar aula de ${aula.materia} - ${aula.dia}. Detalhe do erro:`, error.message || error);
                 }
-                
-            } catch (error) {
-                console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);
-                return {
-                    sucesso: false,
-                    mensagem: `Erro ao adicionar aula de ${aula.materia} - Detalhe do erro: ${error}`
+    
+                if (!aulaRegistrada && tentativa < maximoTentativas) {
+                    tentativa++;
+                } else if (!aulaRegistrada && tentativa === maximoTentativas) {
+                    console.error(`!!! Todas as ${maximoTentativas} tentativas para aula de ${aula.materia} - ${aula.dia} falharam. Avançando para a próxima aula.`);
                 }
             }
-        }
-    } catch (error) {
-        console.error(`Erro ao iterar sobre aulas - Detalhe do erro:`, error);
 
+            if (aulaRegistrada) {
+                sucessoCount++;
+                logs.push(`Aula de ${aula.materia} - Dia ${aula.dia} - Registrada com sucesso!`);
+            } else {
+                falhaCount++;
+                logs.push(`Aula de ${aula.materia} - Dia ${aula.dia} - Falha ao registrar após ${tentativa} tentativas.`);
+            }
+
+            i++; 
+        }
+
+        const totalAulasProcessadas = sucessoCount + falhaCount;
+        mensagemFinal = falhaCount === 0
+            ? "Registro de aulas realizado com sucesso!"
+            : `Registro de aulas concluído. ${sucessoCount} aulas registradas e ${falhaCount} falharam.`;
+
+        console.log(`--- Resumo Final ---`);
+        console.log(`Total de aulas processadas: ${totalAulasProcessadas}`);
+        console.log(`Sucessos: ${sucessoCount}`);
+        console.log(`Falhas: ${falhaCount}`);
+        console.log(`Mensagem: ${mensagemFinal}`);
+        console.log(`---------------------`);
+    
+    } catch (error) {
+        console.error(`Erro fatal ao iterar sobre aulas ou iniciar o processo:`, error);
         return {
             sucesso: false,
-            mensagem: `Erro ao iterar sobre aulas - Detalhe do erro: ${error}`
-        }
-        
+            mensagem: `Erro fatal no processo de registro de aulas - Detalhe do erro: ${error}`
+        };
     }
     
     await browser?.close();
@@ -333,6 +301,11 @@ export const registrarAula = async (config: ConfigAula) => {
 
     return {
         sucesso: true,
-        mensagem: "Registro de aulas realizado com sucesso!"
-    }
+        mensagem: mensagemFinal,
+        relatorio: {
+            sucesso: sucessoCount,
+            falhas: falhaCount,
+            logs: logs
+        }
+    };
 }

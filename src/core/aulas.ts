@@ -161,7 +161,9 @@ export const registrarAula = async (config: ConfigAula) => {
 
         console.log(`Registrando aulas...`);
 
-        for (let i = 0; i < aulas.length; i++) {
+        let i = 0
+
+        while (i < aulas.length) {
 
             const aula = aulas[i];
 
@@ -170,6 +172,8 @@ export const registrarAula = async (config: ConfigAula) => {
                 const indiceMateria = materias.findIndex(materia => materia.materia === aula.materia)
         
                 const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${indiceMateria + 1}) .icone-tabela-visualizar`;
+
+                console.log(`Indo para página de materia`);
     
                 await navegarParaUrl(page, url);
 
@@ -227,50 +231,83 @@ export const registrarAula = async (config: ConfigAula) => {
     
                 await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
 
-                console.log(`Selecionando horário`);
+                try {
 
-                await abrindoSeletorHorario(page);
-
-                await selecionandoHorario(page, "todos");
-
-                console.log("Selecionando exibição de 100 habilidades");
-
-                await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
-
-                await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
-
-                console.log("Inserindo habilidades");
-                
-                await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
-
-                let habilidades = aula.habilidades;
-
-                for (let k = 0; k < habilidades.length; k++) {
-                    await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidades[k]);
-
-                    const elemento = await page.$(`#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
-
-                    if (elemento) {
-                        await clickComEvaluate(page, `#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
-                    }
+                    console.log(`Selecionando horário`);
+    
+                    await abrindoSeletorHorario(page);
+    
+                    await selecionandoHorario(page, "todos");
+                    
+                } catch (error) {
+                    console.error(`Erro ao selecionar horário - Detalhe do erro:`, error);
                 }
 
-                console.log("Inserindo descricao da aula");
+                try {
 
-                await page.waitForSelector('#txtBreveResumo');
+                    console.log("Selecionando exibição de 100 habilidades");
+    
+                    await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
+    
+                    await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
+                    
+                } catch (error) {
+                    console.error(`Erro ao selecionar exibição de 100 habilidades - Detalhe do erro:`, error);
+                }
 
-                await page.type('#txtBreveResumo', aula.descricao);
+                try {
+                    
+                    console.log("Inserindo habilidades");
+                    
+                    await page.waitForSelector('#tblHabilidadeFundamento_filter input[type="search"]');
+    
+                    let habilidades = aula.habilidades;
+    
+                    for (let k = 0; k < habilidades.length; k++) {
+                        await page.type('#tblHabilidadeFundamento_filter input[type="search"]', habilidades[k]);
+    
+                        const elemento = await page.$(`#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
+    
+                        if (elemento) {
+                            await clickComEvaluate(page, `#tblHabilidadeFundamento tbody tr:nth-child(1) td:nth-child(1) input`);
+                        }
+                    }
 
-                console.log("Salvando aula");
+                } catch (error) {
+                    console.error(`Erro ao inserir habilidades - Detalhe do erro:`, error);
+                }
 
-                console.log(`Clicando no botão para salvar...`);
+                try {
+                    
+                    console.log("Inserindo descricao da aula");
+    
+                    await page.waitForSelector('#txtBreveResumo');
+    
+                    await page.type('#txtBreveResumo', aula.descricao);
 
-                await Promise.all([
-                    page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 60000 }),
-                    clickComEvaluate(page, '#btnSalvarCadastro')
-                ])
+                } catch (error) {
+                    console.error(`Erro ao inserir descricao da aula - Detalhe do erro:`, error);
+                }
+                
+                try {
+                    console.log("Salvando aula");
+    
+                    console.log(`Clicando no botão para salvar...`);
 
-                console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso!`);
+                    await Promise.all([
+                        page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 30000 }),
+
+                        page.waitForSelector('#btnSalvarCadastro', { visible: true }),
+
+                        clickComEvaluate(page, '#btnSalvarCadastro')
+                    ])
+
+                    console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso!`);
+
+                    i++;
+                } catch (error) {
+                    console.warn(`Erro ao salvar aula - Detalhe do erro:`, error);
+                }
                 
             } catch (error) {
                 console.error(`Erro ao adicionar aula de ${aula.materia} - Detalhe do erro:`, error);

@@ -263,9 +263,11 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
         const indice = addDays(dataEmFormatoCorreto, 1).getDay();
 
+        await page.waitForSelector('.ui-state-default');
+
         await page.evaluate((indice) => {
           
-          const elemento = (document.querySelectorAll('.ui-state-default').item(indice)) as HTMLElement;
+          const elemento = (document.querySelectorAll('.ui-state-default').item(indice)).parentNode as HTMLElement;
 
           if (elemento.classList.contains('ui-datepicker-week-end')) {
             return {

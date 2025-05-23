@@ -187,21 +187,35 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
     DATEPICKER_SELECTOR: string
 }) => {
 
-    const { DATEPICKER_SELECTOR, DATE_SELECTOR, DATE_TD_SELECTOR } = seletores;
+  const { DATEPICKER_SELECTOR, DATE_SELECTOR, DATE_TD_SELECTOR } = seletores;
 
-    const dataEmFormatoCorreto: Date = parse(data, 'dd/MM/yyyy', new Date());
+  const dataEmFormatoCorreto: Date = parse(data, 'dd/MM/yyyy', new Date());
 
-    const mesmoMes = isThisMonth(dataEmFormatoCorreto);
+  const mesmoMes = isThisMonth(dataEmFormatoCorreto);
+
+  const diaDoMes = dataEmFormatoCorreto.getDate();
+
+  function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
   
   try {
     console.log("Abrindo datepicker");
     
-    await page.evaluate((DATEPICKER_SELECTOR) => {
+    await page.evaluate(async (DATEPICKER_SELECTOR) => {
 
-      const elemento = document.querySelector(DATEPICKER_SELECTOR) as HTMLElement;
+      /* const elemento = document.querySelector(DATEPICKER_SELECTOR) as HTMLElement;
 
       elemento.style.display = 'block';
-      elemento.style.zIndex = '9999';
+      elemento.style.zIndex = '9999'; */
+
+      await page.waitForSelector('.calendar-icon');
+
+      const icone = document.querySelector('.calendar-icon') as HTMLElement;
+
+      icone.click();
+
+      await sleep(2000);
 
     }, DATEPICKER_SELECTOR);
   } catch (error) {
@@ -268,26 +282,22 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
     
       case "aula":
 
-        const diaDoMes = dataEmFormatoCorreto.getDate();
-
         await page.waitForFunction(
-            (day) => {
-              const elements = document.querySelectorAll('.ui-datepicker-calendar td a.ui-state-default');
-              for (const el of elements) {
+          (day) => {
+            const elements = document.querySelectorAll('.ui-datepicker-calendar td a.ui-state-default');
+            for (const el of elements) {
 
-                if (!el.textContent) return false
+              if (!el.textContent) return false
 
-                if (el.textContent.trim() === String(day)) {
-                  return true;
-                }
+              if (el.textContent.trim() === String(day)) {
+                return true;
               }
-              return false;
-            },
-            {},
-            diaDoMes
+            }
+            return false;
+          },
+          {},
+          diaDoMes
         );
-
-        const indice = addDays(dataEmFormatoCorreto, 1).getDay();
 
         await page.waitForSelector('.ui-state-default');
 
@@ -378,14 +388,18 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
         break;
     
       case "aula":
-      
-        const indice = subDays(dataEmFormatoCorreto, 1).getDate()
 
-        await page.evaluate((indice) => {
-          const elemento = (document.querySelectorAll('.ui-state-default').item(indice)) as HTMLElement;
+        await page.evaluate((diaDoMes) => {
+          const elements = document.querySelectorAll('.ui-datepicker-calendar td a.ui-state-default');
 
-          elemento.click();
-        }, indice);
+          for (const el of elements) {
+            if (!el.textContent) continue;
+            if (el.textContent.trim() === String(diaDoMes)) {
+              (el as HTMLElement).click();
+              break;
+            }
+          }
+        }, diaDoMes);
 
         await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
 

@@ -250,12 +250,19 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
       case "frequencia":
         await page.waitForSelector(DATE_TD_SELECTOR);
 
-        await page.evaluate((DATE_TD_SELECTOR) => {
+        const estaAtiva = await page.evaluate((DATE_TD_SELECTOR) => {
   
           const elemento = document.querySelector(DATE_TD_SELECTOR) as HTMLElement;
     
           return elemento.classList.contains('isActive');
         }, DATE_TD_SELECTOR);
+
+        if (!estaAtiva) {
+          console.warn("Data de frequência não está ativa.");
+          return { sucesso: false, mensagem: "Data de frequência não está ativa." };
+        }
+
+        console.log("Data de frequência ativa.");
         
         break;
     
@@ -265,9 +272,16 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
         await page.waitForSelector('.ui-state-default');
 
-        await page.evaluate((indice) => {
+        const dataAtiva = await page.evaluate((indice) => {
           
           const elemento = (document.querySelectorAll('.ui-state-default').item(indice)).parentNode as HTMLElement;
+
+          if (!elemento) {
+            return {
+              sucesso: false,
+              mensagem: `Data nao encontrada!`
+            }
+          }
 
           if (elemento.classList.contains('ui-datepicker-week-end')) {
             return {
@@ -296,7 +310,19 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
               mensagem: `Data já possui registro de aula!`
             }
           }
+
+          return {
+            sucesso: true,
+            mensagem: `Data ativa!`
+          }
         }, indice);
+
+        if (!dataAtiva.sucesso) {
+          console.warn(`Data de aula inválida: ${dataAtiva.mensagem}`);
+          return { sucesso: false, mensagem: `Data de aula inválida: ${dataAtiva.mensagem}` };
+        } else {
+          console.log(`Data de aula ativa: ${dataAtiva.mensagem}`);
+        }
 
       break;
     }
@@ -347,23 +373,23 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
     }
   }
 
-    return {
-      sucesso: true,
-      mensagem: `Data selecionada com sucesso`
-    }
+  return {
+    sucesso: true,
+    mensagem: `Data selecionada com sucesso`
+  }
     
 }
 
 export async function selecionarBimestre(page: Page, bimestre:string) {
   try {
             
-/*     setTimeout(async () => {
+    setTimeout(async () => {
 
         await page.waitForSelector('#bimestres');
 
         await page.select('#bimestres', bimestre);
 
-    }, 3000) */
+    }, 3000)
 
     await page.waitForSelector(`#bimestres option[value="${bimestre}"]`, {timeout: 5000})
     .then(async () => {

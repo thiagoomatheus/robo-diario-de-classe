@@ -268,43 +268,71 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
     
       case "aula":
 
+        const diaDoMes = dataEmFormatoCorreto.getDate();
+
+        await page.waitForFunction(
+            (day) => {
+              const elements = document.querySelectorAll('.ui-datepicker-calendar td a.ui-state-default');
+              for (const el of elements) {
+
+                if (!el.textContent) return false
+
+                if (el.textContent.trim() === String(day)) {
+                  return true;
+                }
+              }
+              return false;
+            },
+            {},
+            diaDoMes
+        );
+
         const indice = addDays(dataEmFormatoCorreto, 1).getDay();
 
         await page.waitForSelector('.ui-state-default');
 
-        const dataAtiva = await page.evaluate((indice) => {
+        const dataAtiva = await page.evaluate((diaDoMes) => {
           
-          const elemento = (document.querySelectorAll('.ui-state-default').item(indice)).parentNode as HTMLElement;
+          let elementoPai: HTMLElement | null = null;
+          const elements = document.querySelectorAll('.ui-datepicker-calendar td a.ui-state-default');
 
-          if (!elemento) {
+          for (const el of elements) {
+            if (!el.textContent) continue;
+            if (el.textContent.trim() === String(diaDoMes)) {
+              elementoPai = el.parentNode as HTMLElement;
+              break;
+            }
+          }
+
+          if (!elementoPai) {
             return {
               sucesso: false,
               mensagem: `Data nao encontrada!`
             }
           }
 
-          if (elemento.classList.contains('ui-datepicker-week-end')) {
+          if (elementoPai.classList.contains('ui-datepicker-week-end')) {
             return {
               sucesso: false,
               mensagem: `Data é um final de semana!`
             }
           }
 
-          if (elemento.classList.contains('datepicker-nao-letivo-color')) {
+          if (elementoPai.classList.contains('datepicker-nao-letivo-color')) {
             return {
               sucesso: false,
               mensagem: `Data é um dia não letivo!`
             }
           }
 
-          if (elemento.classList.contains('ui-state-disabled')) {
+          if (elementoPai.classList.contains('ui-state-disabled')) {
             return {
               sucesso: false,
               mensagem: `Data é um dia desabilitado!`
             }
           }
 
-          if (elemento.classList.contains('dia-verde')) {
+          if (elementoPai.classList.contains('dia-verde')) {
             return {
               sucesso: false,
               mensagem: `Data já possui registro de aula!`
@@ -315,7 +343,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
             sucesso: true,
             mensagem: `Data ativa!`
           }
-        }, indice);
+        }, diaDoMes);
 
         if (!dataAtiva.sucesso) {
           console.warn(`Data de aula inválida: ${dataAtiva.mensagem}`);

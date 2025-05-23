@@ -382,14 +382,6 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
 export async function selecionarBimestre(page: Page, bimestre:string) {
   try {
-            
-    /* setTimeout(async () => {
-
-        await page.waitForSelector('#bimestres');
-
-        await page.select('#bimestres', bimestre);
-
-    }, 3000) */
 
     await page.waitForSelector(`#bimestres option[value="${bimestre}"]`, {timeout: 5000})
     .then(async () => {

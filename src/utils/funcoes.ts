@@ -202,7 +202,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
   try {
     console.log("Abrindo datepicker");
     
-    await page.evaluate(async (DATEPICKER_SELECTOR) => {
+    await page.evaluate(async (page) => {
 
       /* const elemento = document.querySelector(DATEPICKER_SELECTOR) as HTMLElement;
 
@@ -217,7 +217,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
       await sleep(2000);
 
-    }, DATEPICKER_SELECTOR);
+    }, page);
   } catch (error) {
     console.error(`Erro ao abrir datepicker - Detalhe do erro:`, error);
 

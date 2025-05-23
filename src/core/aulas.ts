@@ -171,14 +171,14 @@ export const registrarAula = async (config: ConfigAula) => {
             const aula = aulas[i];
 
             const maximoTentativas = 3;
-            let tentativa = 1;
+            let tentativa = 0;
 
             let aulaRegistrada = false;
     
             console.log(`--- Iniciando registro para aula de ${aula.materia} - ${aula.dia} ---`);
     
-            while (tentativa <= maximoTentativas && !aulaRegistrada) {
-                console.log(`Tentativa: ${tentativa}/${maximoTentativas} para ${aula.materia} - ${aula.dia}`);
+            while (tentativa < maximoTentativas && !aulaRegistrada) {
+                console.log(`Tentativa: ${tentativa + 1}/${maximoTentativas} para ${aula.materia} - ${aula.dia}`);
     
                 try {
     
@@ -245,16 +245,16 @@ export const registrarAula = async (config: ConfigAula) => {
                     console.log(`Clicando no botão para salvar...`);
     
                     await Promise.all([
-                        page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 30000 }),
+                        page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 10000 }),
                         page.waitForSelector('#btnSalvarCadastro', { visible: true }),
                         clickComEvaluate(page, '#btnSalvarCadastro')
                     ]);
     
-                    console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso na tentativa ${tentativa}!`);
+                    console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso na tentativa ${tentativa + 1}!`);
                     aulaRegistrada = true;
                     
                 } catch (error: any) {
-                    console.warn(`Falha na tentativa ${tentativa} para adicionar aula de ${aula.materia} - ${aula.dia}. Detalhe do erro:`, error.message || error);
+                    console.warn(`Falha na tentativa ${tentativa + 1} para adicionar aula de ${aula.materia} - ${aula.dia}. Detalhe do erro:`, error.message || error);
                 }
     
                 if (!aulaRegistrada && tentativa < maximoTentativas) {
@@ -272,7 +272,7 @@ export const registrarAula = async (config: ConfigAula) => {
                 logs.push(`Aula de ${aula.materia} - Dia ${aula.dia} - Falha ao registrar após ${tentativa} tentativas.`);
             }
 
-            i++; 
+            i++;
         }
 
         const totalAulasProcessadas = sucessoCount + falhaCount;

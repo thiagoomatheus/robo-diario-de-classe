@@ -379,31 +379,34 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
     switch (tipo) {
 
       case "frequencia":
-        await clickComEvaluate(page, DATE_SELECTOR)
-    
-        await page.focus(INPUT_DATE_SELECTOR)
-        .then(() => page.keyboard.press('Enter'))
-        .then(() => console.log("Atualizado horários"));
-    
-        await page.waitForResponse('https://frequencia.sed.educacao.sp.gov.br/Frequencia/GetEventsForMonth');
+
+        await Promise.all([
+          page.waitForResponse('https://frequencia.sed.educacao.sp.gov.br/Frequencia/GetEventsForMonth'),
+          clickComEvaluate(page, DATE_SELECTOR),
+          await page.focus(INPUT_DATE_SELECTOR)
+          .then(() => page.keyboard.press('Enter'))
+          .then(() => console.log("Atualizado horários"))
+        ])
       
         break;
     
       case "aula":
 
-        await page.evaluate((diaDoMes) => {
-          const elements = document.querySelectorAll('.ui-datepicker-calendar td a.ui-state-default');
-
-          for (const el of elements) {
-            if (!el.textContent) continue;
-            if (el.textContent.trim() === String(diaDoMes)) {
-              (el as HTMLElement).click();
-              break;
+        await Promise.all([
+          page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos'),
+          page.evaluate((diaDoMes) => {
+            const elements = document.querySelectorAll('.ui-datepicker-calendar td a.ui-state-default');
+  
+            for (const el of elements) {
+              if (!el.textContent) continue;
+              if (el.textContent.trim() === String(diaDoMes)) {
+                (el as HTMLElement).click();
+                break;
+              }
             }
-          }
-        }, diaDoMes);
+          }, diaDoMes)
+        ])
 
-        await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
 
         break;
     }

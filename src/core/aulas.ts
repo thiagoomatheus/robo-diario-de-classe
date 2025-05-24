@@ -216,8 +216,6 @@ export const registrarAula = async (config: ConfigAula) => {
                     }
     
                     await sleep(2000);
-
-                    await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
     
                     console.log(`Selecionando horário`);
                     await abrindoSeletorHorario(page);

@@ -1,4 +1,4 @@
-import { abrindoSeletorHorario, clickComEvaluate, iniciar, navegarParaUrl, selecionandoData, selecionandoHorario, selecionarBimestre, selecionarMateria } from "../utils/funcoes"
+import { abrindoSeletorHorario, clickComEvaluate, iniciar, navegarParaUrl, selecionandoData, selecionandoHorario, selecionarBimestre, selecionarMateria, sleep } from "../utils/funcoes"
 import { analisePorCronograma, Aulas } from "../utils/ia"
 
 type ConfigAula = {
@@ -197,6 +197,8 @@ export const registrarAula = async (config: ConfigAula) => {
                         throw new Error(resultadoSelecionarMateria.mensagem);
                     }
     
+                    await sleep(2000);
+                    
                     console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
     
                     console.log(`Selecionando bimestre ${bimestre}`);
@@ -213,6 +215,8 @@ export const registrarAula = async (config: ConfigAula) => {
                         throw new Error(dataAtiva.mensagem);
                     }
     
+                    await sleep(2000);
+
                     await page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/CarregarCurriculos');
     
                     console.log(`Selecionando horário`);

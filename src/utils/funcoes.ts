@@ -181,6 +181,10 @@ export const selecionarMateria = async (page: Page, seletor: string) => {
 
 };
 
+export function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export const selecionandoData = async (page: Page, data: string, tipo: "frequencia" | "aula", seletores: {
     DATE_TD_SELECTOR: string,
     DATE_SELECTOR: string,
@@ -194,10 +198,6 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
   const mesmoMes = isThisMonth(dataEmFormatoCorreto);
 
   const diaDoMes = dataEmFormatoCorreto.getDate();
-
-  function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
   
   try {
     console.log("Abrindo datepicker");
@@ -213,11 +213,11 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
       const icone = document.querySelector('.calendar-icon') as HTMLElement;
 
-      icone.click();
-
-      await sleep(2000);
+      icone.click(); 
 
     });
+
+    await sleep(2000);
   } catch (error) {
     console.error(`Erro ao abrir datepicker - Detalhe do erro:`, error);
 
@@ -372,6 +372,8 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
       mensagem: `Erro ao verificar se data informada está ativa - Detalhe do erro: ${error}`
     }
   }
+
+  await sleep(2000);
 
   try {
     switch (tipo) {

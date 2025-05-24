@@ -201,15 +201,15 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
   
   try {
     console.log("Abrindo datepicker");
+
+    await page.waitForSelector('.calendar-icon');
     
-    await page.evaluate(async (page) => {
+    await page.evaluate(async () => {
 
       /* const elemento = document.querySelector(DATEPICKER_SELECTOR) as HTMLElement;
 
       elemento.style.display = 'block';
       elemento.style.zIndex = '9999'; */
-
-      await page.waitForSelector('.calendar-icon');
 
       const icone = document.querySelector('.calendar-icon') as HTMLElement;
 
@@ -217,7 +217,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
       await sleep(2000);
 
-    }, page);
+    });
   } catch (error) {
     console.error(`Erro ao abrir datepicker - Detalhe do erro:`, error);
 

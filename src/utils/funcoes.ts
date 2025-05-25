@@ -317,7 +317,7 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
           if (!elementoPai) {
             return {
               sucesso: false,
-              mensagem: `Data nao encontrada!`
+              mensagem: `Data não encontrada!`
             }
           }
 
@@ -357,9 +357,9 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
 
         if (!dataAtiva.sucesso) {
           console.warn(`Data de aula inválida: ${dataAtiva.mensagem}`);
-          return { sucesso: false, mensagem: `Data de aula inválida: ${dataAtiva.mensagem}` };
+          return { sucesso: false, mensagem: `${dataAtiva.mensagem}` };
         } else {
-          console.log(`Data de aula ativa: ${dataAtiva.mensagem}`);
+          console.log(`${dataAtiva.mensagem}`);
         }
 
       break;

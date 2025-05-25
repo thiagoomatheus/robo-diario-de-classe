@@ -212,6 +212,11 @@ export const registrarAula = async (config: ConfigAula) => {
                     });
                     if (!dataAtiva.sucesso) {
                         console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
+
+                        if (dataAtiva.mensagem !== 'Data não encontrada!') {
+                            break;
+                        }
+
                         throw new Error(dataAtiva.mensagem);
                     }
     

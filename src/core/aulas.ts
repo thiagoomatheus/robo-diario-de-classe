@@ -214,6 +214,9 @@ export const registrarAula = async (config: ConfigAula) => {
                         console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
 
                         if (dataAtiva.mensagem !== 'Data não encontrada!') {
+
+                            await sleep(2000);
+
                             break;
                         }
 
@@ -252,7 +255,7 @@ export const registrarAula = async (config: ConfigAula) => {
                     console.log(`Clicando no botão para salvar...`);
     
                     await Promise.all([
-                        page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 10000 }),
+                        page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 15000 }),
                         page.waitForSelector('#btnSalvarCadastro', { visible: true }),
                         clickComEvaluate(page, '#btnSalvarCadastro')
                     ]);

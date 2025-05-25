@@ -253,9 +253,11 @@ export const registrarAula = async (config: ConfigAula) => {
                     
                     console.log("Salvando aula");
                     console.log(`Clicando no botão para salvar...`);
+
+                    await sleep(500);
     
                     await Promise.all([
-                        page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 15000 }),
+                        page.waitForResponse('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', { timeout: 10000 }),
                         page.waitForSelector('#btnSalvarCadastro', { visible: true }),
                         clickComEvaluate(page, '#btnSalvarCadastro')
                     ]);

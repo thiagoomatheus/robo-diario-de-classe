@@ -559,16 +559,14 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     const payloadData = {
                         "CodigoRegAula": CodigoRegAula,
                         "Data": dataString,
-                        "Selecao": [
-                            {"Conteudo":0,"Habilidade":0,"Data":`/Date(${parseISO(dataString).getTime()})/`},
-                            ...(codigosHabilidades || []).map(codigo => {
+                        "Selecao": 
+                            codigosHabilidades ? codigosHabilidades.map(codigo => {
                                 return {
                                     "Conteudo": codigo,
                                     "Habilidade": codigo,
                                     "Data": `/Date(${parseISO(dataString).getTime()})/`
                                 }
-                            })
-                        ],
+                            }) : [],
                         "SelecaoEixo": [],
                         "Bimestre": bimestre,
                         "Observacoes": "",

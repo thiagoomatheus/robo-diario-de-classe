@@ -627,6 +627,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     }, formData);
 
                     console.log('Requisição POST enviada com sucesso!');
+                    console.log(`Resposta do servidor: ${responseData}`);
+                    
                     console.log('Resposta do servidor: Sucesso - ', /* responseData */);
     
                     console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso na tentativa ${tentativa + 1}!`);

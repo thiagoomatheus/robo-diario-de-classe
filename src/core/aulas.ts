@@ -606,7 +606,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             body: formData.toString(),
                         });
 
-                        console.log(response.text());
+                        console.log(await response.text());
                         
                         const jsonResponse: ResponsePostSalvarAula = await response.json();
 

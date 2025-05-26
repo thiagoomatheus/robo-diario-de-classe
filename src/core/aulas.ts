@@ -590,14 +590,9 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     const payload = JSON.stringify(payloadData);
 
                     const formData = new URLSearchParams();
-                    /* formData.append('__RequestVerificationToken', csrfToken); */
                     formData.append('str', payload);
 
                     console.log('Enviando requisição POST...');
-
-                    console.log(await browser.cookies());
-                    
-                    console.log(formData.toString());
 
                     const responseData = await page.evaluate(async (formData) => {
 
@@ -610,6 +605,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             },
                             body: formData.toString(),
                         });
+
+                        console.log(response.text());
                         
                         const jsonResponse: ResponsePostSalvarAula = await response.json();
 

@@ -551,7 +551,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                         "Data": dataString,
                         "Selecao": [
                             {"Conteudo":0,"Habilidade":0,"Data":`/Date(${parseISO(dataString).getTime()})/`},
-                            codigosHabilidades && codigosHabilidades.map(codigo => {
+                            ...(codigosHabilidades || []).map(codigo => {
                                 return {
                                     "Conteudo": codigo,
                                     "Habilidade": codigo,
@@ -573,7 +573,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                         "Nr_Ra": "",
                         "Nr_Dig_Ra": "",
                         "Sg_Uf_Ra": "",
-                        "DsResumo": aula.descricao.replace('"', '\\"'),
+                        "DsResumo": aula.descricao,
                         "TarefasApiCm": []
                     };
 
@@ -586,6 +586,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     console.log('Enviando requisição POST...');
 
                     const responseData = await page.evaluate(async (formData) => {
+
+                        console.log(formData.toString(),);
 
                         const response = await fetch('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', {
                             method: 'POST',
@@ -600,6 +602,10 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                         if (!response.ok) {
                             throw new Error(`Requisição POST falhou com status ${response.status}`);
                         }
+
+                        const jsonResponse = await response.json();
+
+                        console.log(jsonResponse);
                         
                         return response.status;
                     }, formData);

@@ -605,18 +605,16 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             },
                             body: formData.toString(),
                         });
-
-                        console.log(await response.text());
                         
-                        const jsonResponse: ResponsePostSalvarAula = await response.json();
+                        const textResponse = await response.text();
 
-                        console.log(jsonResponse);
+                        console.log(textResponse);
 
-                        if (!jsonResponse.Sucesso) {
-                            throw new Error(`Requisição POST falhou: ${jsonResponse.Erro}`);
+                        if (!response.ok) {
+                            throw new Error(`Requisição POST falhou: ${response.status}`);
                         }
                         
-                        return jsonResponse.Sucesso;
+                        return response.ok;
                     }, formData);
 
                     console.log('Requisição POST enviada com sucesso!');

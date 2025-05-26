@@ -595,6 +595,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
 
                     console.log('Enviando requisição POST...');
 
+                    console.log(await browser.cookies());
+                    
                     console.log(formData.toString());
 
                     const responseData = await page.evaluate(async (formData) => {

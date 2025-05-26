@@ -3,7 +3,7 @@ import { buscarAlunos, buscarTurmas } from "./core/alunos";
 import { marcarFrequencia } from "./core/frequencia";
 import { FastifyTypedInstance } from "./types";
 import { z } from "zod";
-import { registrarAula } from "./core/aulas";
+import { registrarAula, registrarAulaViaRequest } from "./core/aulas";
 import jwt from 'jsonwebtoken';
 import { JWT_EXPIRES_IN, JWT_SECRET } from "../config";
 import { authenticateJWT } from "./hooks/auth";
@@ -438,11 +438,7 @@ export default async function routes(app: FastifyTypedInstance) {
         200: z.object({
           sucesso: z.boolean(),
           mensagem: z.string(),
-          relatorio: z.object({
-            sucesso: z.number(),
-            falhas: z.number(),
-            logs: z.array(z.string())
-          })
+          relatorio: z.array(z.string())
         }),
         404: z.object({
           sucesso: z.boolean(),
@@ -470,16 +466,12 @@ export default async function routes(app: FastifyTypedInstance) {
     let resposta = {
       sucesso: false,
       mensagem: "",
-      relatorio: {
-        sucesso: 0,
-        falhas: 0,
-        logs: ['']
-      }
+      relatorio: ['']
     }
       
     try {
   
-      const resultado = await registrarAula({
+      const resultado = await registrarAulaViaRequest({
         login: usuario.login,
         password: senha,
         linkCronograma,

@@ -601,12 +601,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             throw new Error(`Requisição POST falhou com status ${response.status}`);
                         }
                         
-                        const contentType = response.headers.get('content-type');
-                        if (contentType && contentType.includes('application/json')) {
-                            return response.json();
-                        } else {
-                            return response.text();
-                        }
+                        return response.status;
                     }, formData);
 
                     console.log('Requisição POST enviada com sucesso!');

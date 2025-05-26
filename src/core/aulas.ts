@@ -10,6 +10,16 @@ type ConfigAula = {
     linkCronograma: string
 }
 
+type ResponsePostSalvarAula = {
+    "Sucesso": boolean,
+    "Erro": string,
+    "ApiCentroMidia": boolean,
+    "ApiCentroMidiaDisponivel": boolean,
+    "TarefasCentroMidiaNaoEnviada": string[] | null,
+    "Mensagens": string[] | null,
+    "TipoEnsino": string | null
+}
+
 const url = 'https://sed.educacao.sp.gov.br/RegistroAula/Index'
 
 async function buscarHabilidades(page: Page, bimestre: string): Promise<{
@@ -603,15 +613,15 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             throw new Error(`Requisição POST falhou com status ${response.status}`);
                         }
 
-                        const jsonResponse = await response.json();
+                        const jsonResponse: ResponsePostSalvarAula = await response.json();
 
                         console.log(jsonResponse);
                         
-                        return response.status;
+                        return jsonResponse.Sucesso;
                     }, formData);
 
                     console.log('Requisição POST enviada com sucesso!');
-                    console.log('Resposta do servidor:', responseData);
+                    console.log('Resposta do servidor: Sucesso - ', responseData);
     
                     console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso na tentativa ${tentativa + 1}!`);
                     aulaRegistrada = true;

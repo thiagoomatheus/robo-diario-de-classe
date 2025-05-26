@@ -590,7 +590,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     const payload = JSON.stringify(payloadData);
 
                     const formData = new URLSearchParams();
-                    formData.append('__RequestVerificationToken', csrfToken);
+                    /* formData.append('__RequestVerificationToken', csrfToken); */
                     formData.append('str', payload);
 
                     console.log('Enviando requisição POST...');

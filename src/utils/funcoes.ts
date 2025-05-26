@@ -472,18 +472,18 @@ export const selecionandoHorario = async (page: Page, tipoDeSelecao: "unico" | "
       break;
     case "todos":
       await page.evaluate(() => {
-          const horarios = document.querySelectorAll('#chHorario');
-    
-          horarios.forEach((horario) => {
-              (horario as HTMLInputElement).click();
-          })
+        const horarios = document.querySelectorAll('#chHorario');
+  
+        horarios.forEach((horario) => {
+          (horario as HTMLInputElement).click();
+        })
       })
       break;
   }
 
   await page.waitForSelector(HORARIO_SELECTOR);
 
-    await clickComEvaluate(page, HORARIO_SELECTOR);
+  await clickComEvaluate(page, HORARIO_SELECTOR);
 }
 
 export const abrindoSeletorHorario = async (page: Page) => await page.evaluate(() => {

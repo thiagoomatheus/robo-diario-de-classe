@@ -593,6 +593,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     formData.append('str', payload);
 
                     console.log('Enviando requisição POST...');
+                    
+                    console.log(formData.toString());
 
                     const responseData = await page.evaluate(async (formData) => {
 
@@ -605,20 +607,27 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             },
                             body: formData.toString(),
                         });
-                        
-                        const textResponse = await response.text();
 
-                        console.log(textResponse);
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json();
+                        } else {
+                            return response.text();
+                        }
 
-                        if (!response.ok) {
-                            throw new Error(`Requisição POST falhou: ${response.status}`);
+                        /* const jsonResponse: ResponsePostSalvarAula = await response.json();
+
+                        console.log(jsonResponse);
+
+                        if (!jsonResponse.Sucesso) {
+                            throw new Error(`Requisição POST falhou: ${jsonResponse.Erro}`);
                         }
                         
-                        return response.ok;
+                        return jsonResponse.Sucesso; */
                     }, formData);
 
                     console.log('Requisição POST enviada com sucesso!');
-                    console.log('Resposta do servidor: Sucesso - ', responseData);
+                    console.log('Resposta do servidor: Sucesso - ', /* responseData */);
     
                     console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso na tentativa ${tentativa + 1}!`);
                     aulaRegistrada = true;

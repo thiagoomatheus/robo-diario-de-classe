@@ -417,21 +417,56 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
 
     page.on('request', async (request) => {
         if (request.url().includes('/RegistroAula/Salvar') && request.method() === 'POST') {
-            try {
-                // Capturar os dados originais que o clique no botão geraria
-                const originalPostData = request.postData();
-                const originalHeaders = request.headers();
+        try {
+            const originalPostData: any = request.postData(); // Isso pode ser um objeto, Buffer ou string
+            const originalHeaders = request.headers();
 
-                console.log(originalHeaders);
-                console.log(originalPostData);
-
-                await request.continue();
-            } catch (error) {
-                console.error(`Erro ao capturar os dados originais:`, error);
+            // MODIFICAÇÃO: Converta originalPostData para string se não for já
+            let postDataString: string;
+            if (originalPostData === undefined) {
+                postDataString = '';
+            } else if (typeof originalPostData === 'string') {
+                postDataString = originalPostData;
+            } else if (originalPostData instanceof Buffer) { // Pode ser um Buffer
+                postDataString = originalPostData.toString('utf8');
+            } else { // Assumir que é um objeto com método toString(), como URLSearchParams
+                postDataString = (originalPostData as any).toString();
             }
-        } else {
-            await request.continue();
+
+            // Agora, você pode logar a string corretamente
+            console.log("HEADERS ORIGINAIS DA REQUISIÇÃO INTERCEPTADA:", originalHeaders);
+            console.log("POSTDATA ORIGINAL DA REQUISIÇÃO INTERCEPTADA (string):", postDataString);
+
+
+            const params = new URLSearchParams(postDataString || ''); // Use a string convertida
+            let str = params.get('str');
+            
+            if (str) {
+                // Decodificar e parsear o JSON original do navegador
+                let originalPayloadObject = JSON.parse(decodeURIComponent(str.replace(/\+/g, ' ')));
+
+                // Re-stringificar o JSON modificado e URL-encode novamente
+                const newStr = encodeURIComponent(JSON.stringify(originalPayloadObject));
+                
+                // Colocar o 'str' modificado de volta nos parâmetros
+                params.set('str', newStr);
+
+                // Reconstruir o corpo da requisição completo
+                const newPostData = params.toString();
+
+                await request.continue({ postData: newPostData, headers: originalHeaders });
+            } else {
+                console.error("Parâmetro 'str' ou 'currentPayloadData' ausente na requisição de salvar aula. Abortando.");
+                await request.abort();
+            }
+
+        } catch (error: any) {
+            console.error(`Erro ao interceptar e modificar requisição POST de salvar aula: ${error.message || error}`);
+            await request.abort();
         }
+    } else {
+        await request.continue();
+    }
     });
 
     try {
@@ -640,9 +675,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Referer': urlReferer,
                                 'Origin': urlOrigin,
-                                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36',
                             },
-                            body: encodeURIComponent(JSON.stringify(formData)),
+                            body: formData.toString(),
                             credentials: 'include'
                         });
 

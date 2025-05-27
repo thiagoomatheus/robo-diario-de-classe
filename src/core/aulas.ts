@@ -600,7 +600,6 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     const csrfTokenToSend = csrfTokenFromCookie || csrfToken;
                     
                     const formData = new URLSearchParams();
-                    formData.append('__RequestVerificationToken', csrfTokenToSend);
                     formData.append('str', payload);
 
                     console.log('Enviando requisição POST...');

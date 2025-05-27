@@ -706,3 +706,355 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
     };
 
 }
+
+
+export async function registrarAulaViaRequestTeste(config: ConfigAula) {
+
+    const { linkCronograma, bimestre } = config;
+
+    const { sucesso, mensagem, page, browser } = await iniciar({
+        login: config.login,
+        password: config.password,
+        url: url
+    });
+
+    if (!sucesso || !page || !browser) {
+        return {
+            sucesso: false,
+            mensagem: "Erro ao iniciar o navegador ou login: " + mensagem
+        };
+    }
+
+    let materias: {
+        materia: string,
+        habilidades: string[]
+    }[] = [];
+
+    try {
+        materias = await buscarHabilidades(page, bimestre);
+    } catch (error: any) {
+        return {
+            sucesso: false,
+            mensagem: `Erro ao buscar habilidades: ${error.message || error}`
+        };
+    }
+
+    console.log(materias);
+
+    console.log(`Analisando cronograma...`);
+
+    const resultado = await analisePorCronograma({
+        materias,
+        linkCronograma
+    });
+
+    if (!resultado.sucesso || !resultado.resposta) {
+        console.error(`Erro ao analisar cronograma:`, resultado.mensagem);
+        return {
+            sucesso: false,
+            mensagem: `Erro ao analisar cronograma: ${resultado.mensagem}`
+        };
+    }
+
+    const { resposta: aulas } = resultado;
+
+    console.log(aulas);
+
+    let sucessoCount = 0;
+    let falhaCount = 0;
+    const logs: string[] = [];
+    let mensagemFinal = "";
+
+    // MODIFICAÇÃO IMPORTANTE: Habilitar interceptação de requisições uma vez
+    await page.setRequestInterception(true);
+
+    // Variável para armazenar o payloadData para a requisição atual que será interceptada
+    let currentPayloadData: any = null;
+
+    // MODIFICAÇÃO IMPORTANTE: Listener para interceptar e modificar a requisição POST de salvar aula
+    page.on('request', async (request) => {
+        if (request.url().includes('/RegistroAula/Salvar') && request.method() === 'POST') {
+            try {
+                // Capturar os dados originais que o clique no botão geraria
+                const originalPostData = request.postData();
+                const originalHeaders = request.headers();
+
+                // Analisar o corpo da requisição original (que é application/x-www-form-urlencoded)
+                const params = new URLSearchParams(originalPostData || '');
+                let str = params.get('str'); // O seu payload JSON está dentro do parâmetro 'str'
+                
+                // O __RequestVerificationToken já estará no formData original que o navegador gerou.
+                // Não precisamos manipulá-lo aqui, pois o browser já está enviando o par correto.
+                // const csrfTokenFromRequest = params.get('__RequestVerificationToken'); 
+
+                if (str && currentPayloadData) {
+                    // Decodificar e parsear o JSON original para poder modificá-lo com os seus dados
+                    // (Lembre-se que o payloadData é montado com seus dados limpos,
+                    // e agora estamos garantindo que a versão final enviada contenha eles)
+                    let originalPayloadObject = JSON.parse(decodeURIComponent(str.replace(/\+/g, ' ')));
+
+                    // Sobrescrever com os dados que você preparou em `currentPayloadData`
+                    // Isso garante que CodigoRegAula seja "" para nova aula, habilidades estejam corretas, etc.
+                    const finalPayloadObject = { ...originalPayloadObject, ...currentPayloadData };
+
+                    // Re-stringificar o JSON modificado e URL-encode novamente
+                    const newStr = encodeURIComponent(JSON.stringify(finalPayloadObject));
+                    
+                    // Colocar o 'str' modificado de volta nos parâmetros
+                    params.set('str', newStr);
+
+                    // Reconstruir o corpo da requisição completo
+                    const newPostData = params.toString();
+
+                    // Prosseguir com a requisição, usando os cabeçalhos originais (que o navegador já populou corretamente)
+                    // e o postData modificado.
+                    await request.continue({ postData: newPostData, headers: originalHeaders });
+                } else {
+                    console.error("Parâmetro 'str' ou 'currentPayloadData' ausente na requisição de salvar aula. Abortando.");
+                    await request.abort(); // Abortar a requisição se não puder modificá-la
+                }
+
+            } catch (error: any) {
+                console.error(`Erro ao interceptar e modificar requisição POST de salvar aula: ${error.message || error}`);
+                await request.abort(); // Abortar em caso de erro na modificação
+            }
+        } else {
+            // Permitir que outras requisições (CSS, JS, imagens, etc.) continuem normalmente
+            await request.continue();
+        }
+    });
+
+
+    try {
+        console.log(`Registrando aulas...`);
+
+        let i = 0;
+
+        while (i < aulas.length) {
+            const aula = aulas[i];
+            const maximoTentativas = 3;
+            let tentativa = 0;
+            let aulaRegistrada = false;
+
+            console.log(`--- Iniciando registro para aula de ${aula.materia} - ${aula.dia} ---`);
+
+            while (tentativa < maximoTentativas && !aulaRegistrada) {
+                console.log(`Tentativa: ${tentativa + 1}/${maximoTentativas} para ${aula.materia} - ${aula.dia}`);
+
+                try {
+                    const indiceMateria = materias.findIndex(materia => materia.materia === aula.materia);
+                    const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${indiceMateria + 1}) .icone-tabela-visualizar`;
+
+                    console.log(`Indo para página de materia`);
+                    await navegarParaUrl(page, url); // Garante que estamos na página de registro de aula
+                    await page.waitForSelector(MATERIA_SELECTOR);
+
+                    console.log(`Selecionando materia de ${aula.materia}`);
+                    const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
+                    if (!resultadoSelecionarMateria.sucesso) {
+                        console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
+                        throw new Error(resultadoSelecionarMateria.mensagem);
+                    }
+
+                    await sleep(2000); // Dar tempo para a página carregar após selecionar a matéria
+
+                    console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
+
+                    console.log(`Selecionando bimestre ${bimestre}`);
+                    await selecionarBimestre(page, bimestre);
+
+                    console.log(`Selecionando data ${aula.dia}`);
+                    const dataAtiva = await selecionandoData(page, aula.dia, "aula", {
+                        DATE_SELECTOR: ``,
+                        DATE_TD_SELECTOR: ``,
+                        DATEPICKER_SELECTOR: ".datepicker"
+                    });
+                    if (!dataAtiva.sucesso) {
+                        console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
+                        if (dataAtiva.mensagem !== 'Data não encontrada!') {
+                            await sleep(2000);
+                            break; // Se a data for realmente inválida, não tentar novamente
+                        }
+                        throw new Error(dataAtiva.mensagem);
+                    }
+
+                    await sleep(2000); // Dar tempo para a página atualizar após selecionar a data
+
+                    console.log(`Buscando horário(s)`);
+                    const horarios = await page.evaluate(() => {
+                        const elementos = document.querySelectorAll('#chHorario');
+                        const horarios: string[] = [];
+                        elementos.forEach((elemento) => {
+                            horarios.push((elemento as HTMLInputElement).value);
+                        });
+                        return horarios;
+                    });
+
+                    console.log("Selecionando exibição de 100 habilidades");
+                    await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
+                    await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
+                    
+                    // Aguardar um pouco para a tabela de habilidades recarregar após a seleção de 100
+                    await sleep(1000);
+
+                    console.log("Buscando habilidades");
+                    const codigosHabilidades: number[] = await page.evaluate((habilidadesArray) => {
+                        const elementos = document.querySelectorAll('#tblHabilidadeFundamento tbody tr');
+                        return Array.from(elementos)
+                            .filter(elemento => habilidadesArray.includes((elemento as HTMLElement).querySelector('td:nth-child(2)')?.textContent || ''))
+                            .map(elemento => {
+                                const input = (elemento as HTMLElement).querySelector('input[type="checkbox"]') as HTMLInputElement;
+                                return input ? parseInt(input.value) : null;
+                            })
+                            .filter((codigo): codigo is number => codigo !== null); // Type guard para filtrar nulls
+                    }, aula.habilidades);
+
+                    console.log("Buscando código da turma");
+                    const codigoDaTurma: number | null = await page.evaluate(() => {
+                        const input = document.querySelector('#hdCodigoTurma') as HTMLInputElement;
+                        return input ? parseInt(input.value) : null;
+                    });
+                    if (!codigoDaTurma) {
+                        throw new Error("Não foi possivel obter o código da turma");
+                    }
+
+                    console.log("Buscando código da disciplina");
+                    const codigoDaDisciplina: number | null = await page.evaluate(() => {
+                        const input = document.querySelector('#hdCodigoDisciplina') as HTMLInputElement;
+                        return input ? parseInt(input.value) : null;
+                    });
+                    if (!codigoDaDisciplina) {
+                        throw new Error("Não foi possivel obter o código da materia");
+                    }
+
+                    console.log("Buscando código da aula (para nova aula, deve ser vazio)");
+                    // MODIFICAÇÃO IMPORTANTE: Garantir que CodigoRegAula seja vazio para nova aula
+                    const codigoRegAulaRaw: string | null = await page.evaluate(() => {
+                        const input = document.querySelector('#hdCodigoRegAula') as HTMLInputElement;
+                        return input ? input.value : null;
+                    });
+                    const codigoRegAulaParaPayload = (codigoRegAulaRaw === null || codigoRegAulaRaw === "0") ? "" : codigoRegAulaRaw;
+
+
+                    console.log("Preparando payload de dados para injeção...");
+                    const dataString = `${aula.dia.split('/').reverse().join('-')}T03:00:00.000Z`; // Formato ISO para JS Date
+
+                    // NOVO: Montar o payload de dados que você quer que seja enviado.
+                    // Este será o `currentPayloadData` que o interceptor usará para sobrescrever.
+                    currentPayloadData = {
+                        "CodigoRegAula": codigoRegAulaParaPayload, // Corrigido para ser "" para nova aula
+                        "Data": dataString,
+                        "Selecao": codigosHabilidades.length > 0 ? codigosHabilidades.map(codigo => {
+                            return {
+                                "Conteudo": codigo,
+                                "Habilidade": codigo,
+                                "Data": `/Date(${parseISO(dataString).getTime()})/`
+                            };
+                        }) : [], // Garante que Selecao é um array, mesmo se vazio
+                        "SelecaoEixo": [],
+                        "Bimestre": bimestre,
+                        "Observacoes": "",
+                        "CodigoTurma": codigoDaTurma,
+                        "CodigoDisciplina": codigoDaDisciplina,
+                        "Horarios": horarios.join(','),
+                        "RecursosAula": {
+                            "Recursos": [],
+                            "Resumo": aula.descricao
+                        },
+                        "FlAprenderJunto": false,
+                        "Nr_Ra": "",
+                        "Nr_Dig_Ra": "",
+                        "Sg_Uf_Ra": "",
+                        "DsResumo": aula.descricao,
+                        "TarefasApiCm": []
+                    };
+                    
+                    console.log('Disparando clique no botão de salvar para enviar a requisição...');
+                    // MODIFICAÇÃO IMPORTANTE: Clique no botão que envia o formulário
+                    // e espere pela resposta da requisição POST
+                    const [response] = await Promise.all([
+                        page.waitForResponse(response => response.url().includes('/RegistroAula/Salvar') && response.request().method() === 'POST'),
+                        page.waitForSelector('#btnSalvarCadastro', { visible: true }),
+                        clickComEvaluate(page, '#btnSalvarCadastro')
+                    ]);
+                    
+                    // Resetar currentPayloadData para evitar interferência em próximas iterações
+                    currentPayloadData = null;
+
+                    // Lidar com a resposta da requisição
+                    const contentType = response.headers()['content-type'];
+                    let responseData: any;
+
+                    if (contentType && contentType.includes('application/json')) {
+                        responseData = await response.json();
+                        console.log(`Resposta do servidor (JSON): ${JSON.stringify(responseData, null, 2)}`);
+
+                        // A SED geralmente retorna { Sucesso: true, Erro: null } em caso de sucesso
+                        if (responseData.Sucesso === true) {
+                            console.log(`Aula de ${aula.materia} - ${aula.dia} adicionada com sucesso na tentativa ${tentativa + 1}!`);
+                            aulaRegistrada = true;
+                        } else {
+                            throw new Error(`Requisição POST falhou no backend: ${responseData.Erro || 'Erro desconhecido'}`);
+                        }
+                    } else {
+                        responseData = await response.text();
+                        console.warn(`Resposta do servidor não foi JSON. Possível erro ou redirecionamento.`);
+                        console.warn(`Resposta do servidor (HTML/Texto): ${responseData.substring(0, 500)}...`);
+                        throw new Error(`Servidor retornou HTML/texto (status ${response.status()}) ao invés de JSON. Verifique o arquivo de log.`);
+                    }
+
+                } catch (error: any) {
+                    console.warn(`Falha na tentativa ${tentativa + 1} para adicionar aula de ${aula.materia} - ${aula.dia}. Detalhe do erro:`, error.message || error);
+                }
+
+                if (!aulaRegistrada && tentativa < maximoTentativas - 1) { // Só incrementa se não for a última tentativa
+                    tentativa++;
+                } else if (!aulaRegistrada && tentativa === maximoTentativas - 1) { // Se falhou na última tentativa
+                    console.error(`!!! Todas as ${maximoTentativas} tentativas para aula de ${aula.materia} - ${aula.dia} falharam. Avançando para a próxima aula.`);
+                    break; // Sai do loop de tentativas
+                }
+            }
+
+            if (aulaRegistrada) {
+                sucessoCount++;
+                logs.push(`Aula de ${aula.materia} - Dia ${aula.dia} - Registrada com sucesso!`);
+            } else {
+                falhaCount++;
+                logs.push(`Aula de ${aula.materia} - Dia ${aula.dia} - Falha ao registrar após ${maximoTentativas} tentativas.`);
+            }
+
+            i++;
+        }
+
+        const totalAulasProcessadas = sucessoCount + falhaCount;
+        mensagemFinal = falhaCount === 0
+            ? "Registro de aulas realizado com sucesso!"
+            : `Registro de aulas concluído. ${sucessoCount} aulas registradas e ${falhaCount} falharam.`;
+
+        console.log(`--- Resumo Final ---`);
+        console.log(`Total de aulas processadas: ${totalAulasProcessadas}`);
+        console.log(`Sucessos: ${sucessoCount}`);
+        console.log(`Falhas: ${falhaCount}`);
+        console.log(`Mensagem: ${mensagemFinal}`);
+        console.log(`---------------------`);
+
+    } catch (error: any) {
+        console.error(`Erro fatal ao iterar sobre aulas ou iniciar o processo:`, error.message || error);
+        return {
+            sucesso: false,
+            mensagem: `Erro fatal no processo de registro de aulas: ${error.message || error}`
+        };
+    } finally {
+        // MODIFICAÇÃO IMPORTANTE: Desabilitar a interceptação de requisições ao finalizar
+        await page.setRequestInterception(false);
+        await browser?.close();
+    }
+
+    console.log('Finalizado!');
+
+    return {
+        sucesso: true,
+        mensagem: mensagemFinal,
+        relatorio: logs
+    };
+}

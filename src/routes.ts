@@ -3,7 +3,7 @@ import { buscarAlunos, buscarTurmas } from "./core/alunos";
 import { marcarFrequencia } from "./core/frequencia";
 import { FastifyTypedInstance } from "./types";
 import { z } from "zod";
-import { registrarAula, registrarAulaViaRequest } from "./core/aulas";
+import { registrarAula, registrarAulaViaRequest, registrarAulaViaRequestTeste } from "./core/aulas";
 import jwt from 'jsonwebtoken';
 import { JWT_EXPIRES_IN, JWT_SECRET } from "../config";
 import { authenticateJWT } from "./hooks/auth";
@@ -471,7 +471,7 @@ export default async function routes(app: FastifyTypedInstance) {
       
     try {
   
-      const resultado = await registrarAulaViaRequest({
+      const resultado = await registrarAulaViaRequestTeste({
         login: usuario.login,
         password: senha,
         linkCronograma,

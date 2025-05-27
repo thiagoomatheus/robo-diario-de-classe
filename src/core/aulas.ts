@@ -779,6 +779,9 @@ export async function registrarAulaViaRequestTeste(config: ConfigAula) {
                 const originalPostData = request.postData();
                 const originalHeaders = request.headers();
 
+                console.log(originalHeaders);
+                console.log(originalPostData);
+
                 // Analisar o corpo da requisição original (que é application/x-www-form-urlencoded)
                 const params = new URLSearchParams(originalPostData || '');
                 let str = params.get('str'); // O seu payload JSON está dentro do parâmetro 'str'

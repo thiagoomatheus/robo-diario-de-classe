@@ -425,174 +425,189 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
             let tentativa = 0;
 
             let aulaRegistrada = false;
+
+            let payload = "";
+
+            try {
+
+                console.log(`--- Iniciando registro para aula de ${aula.materia} - ${aula.dia} ---`);
+        
+                const indiceMateria = materias.findIndex(materia => materia.materia === aula.materia);
+                const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${indiceMateria + 1}) .icone-tabela-visualizar`;
     
-            console.log(`--- Iniciando registro para aula de ${aula.materia} - ${aula.dia} ---`);
+                console.log(`Indo para página de materia`);
+                await navegarParaUrl(page, url);
+                await page.waitForSelector(MATERIA_SELECTOR);
     
+                console.log(`Selecionando materia de ${aula.materia}`);
+    
+                const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
+                if (!resultadoSelecionarMateria.sucesso) {
+                    console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
+                    throw new Error(resultadoSelecionarMateria.mensagem);
+                }
+    
+                await sleep(2000);
+                
+                console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
+    
+                console.log(`Selecionando bimestre ${bimestre}`);
+                await selecionarBimestre(page, bimestre);
+                
+                console.log(`Selecionando data ${aula.dia}`);
+                const dataAtiva = await selecionandoData(page, aula.dia, "aula", {
+                    DATE_SELECTOR: ``,
+                    DATE_TD_SELECTOR: ``,
+                    DATEPICKER_SELECTOR: ".datepicker"
+                });
+                if (!dataAtiva.sucesso) {
+                    console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
+    
+                    if (dataAtiva.mensagem !== 'Data não encontrada!') {
+    
+                        await sleep(2000);
+    
+                        break;
+                    }
+    
+                    throw new Error(dataAtiva.mensagem);
+                }
+    
+                await sleep(2000);
+    
+                console.log(`Buscando horário(s)`);
+                
+                const horarios = await page.evaluate(() => {
+                    const elementos = document.querySelectorAll('#chHorario');
+                    const horarios: string[] = [];
+    
+                    elementos.forEach((elemento) => {
+                        horarios.push((elemento as HTMLInputElement).value);
+                    })
+    
+                    return horarios;
+                })
+                
+                console.log("Selecionando exibição de 100 habilidades");
+                await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
+                await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
+                
+                console.log("Buscando habilidades");
+                let habilidades = aula.habilidades;
+    
+                const codigosHabilidades: number[] = await page.evaluate((habilidades) => {
+                    const elementos = document.querySelectorAll('#tblHabilidadeFundamento tbody tr');
+    
+                    return Array.from(elementos)
+                    .filter(elemento => habilidades.includes((elemento as HTMLElement).querySelector('td:nth-child(2)')?.textContent || ''))
+                    .map(elemento => {
+                        const input = (elemento as HTMLElement).querySelector('input[type="checkbox"]') as HTMLInputElement;
+                        return input ? parseInt(input.value) : null;
+                    })
+                    .filter(codigo => codigo !== null);
+                }, habilidades);
+    
+                console.log("Buscando código da turma");
+    
+                const codigoDaTurma: number | null = await page.evaluate(() => {
+                    const input = document.querySelector('#hdCodigoTurma') as HTMLInputElement;
+                    return input ? parseInt(input.value) : null;
+                })
+    
+                if (!codigoDaTurma) {
+                    throw new Error("Não foi possivel obter o código da turma");
+                }
+    
+                console.log("Buscando código da disciplina");
+    
+                const codigoDaDisciplina: number | null = await page.evaluate(() => {
+                    const input = document.querySelector('#hdCodigoDisciplina') as HTMLInputElement;
+                    return input ? parseInt(input.value) : null;
+                })
+    
+                if (!codigoDaDisciplina) {
+                    throw new Error("Não foi possivel obter o código da materia");
+                }
+    
+                console.log("Buscando código da aula");
+    
+                const CodigoRegAula: string | null = await page.evaluate(() => {
+                    const input = document.querySelector('#hdCodigoRegAula') as HTMLInputElement;
+                    return input ? input.value : null;
+                })
+    
+                if (!CodigoRegAula) {
+                    throw new Error("Não foi possivel obter o código da aula");
+                }
+    
+                console.log("Manipulando dados");
+    
+                const dataString = `${aula.dia.split('/').reverse().join('-')}T03:00:00.000Z`
+    
+                const payloadData = {
+                    "CodigoRegAula": CodigoRegAula,
+                    "Data": dataString,
+                    "Selecao": 
+                        codigosHabilidades ? codigosHabilidades.map(codigo => {
+                            return {
+                                "Conteudo": codigo,
+                                "Habilidade": codigo,
+                                "Data": `/Date(${parseISO(dataString).getTime()})/`
+                            }
+                        }) : [],
+                    "SelecaoEixo": [],
+                    "Bimestre": bimestre,
+                    "Observacoes": "",
+                    "CodigoTurma": codigoDaTurma,
+                    "CodigoDisciplina": codigoDaDisciplina,
+                    "Horarios": horarios.join(','),
+                    "RecursosAula": {
+                        "Recursos": [],
+                        "Resumo": aula.descricao
+                    },
+                    "FlAprenderJunto": false,
+                    "Nr_Ra": "",
+                    "Nr_Dig_Ra": "",
+                    "Sg_Uf_Ra": "",
+                    "DsResumo": aula.descricao,
+                    "TarefasApiCm": []
+                };
+    
+                payload = JSON.stringify(payloadData);
+
+            } catch (error) {
+                
+            }
+
             while (tentativa < maximoTentativas && !aulaRegistrada) {
+
                 console.log(`Tentativa: ${tentativa + 1}/${maximoTentativas} para ${aula.materia} - ${aula.dia}`);
     
                 try {
-    
-                    const indiceMateria = materias.findIndex(materia => materia.materia === aula.materia);
-                    const MATERIA_SELECTOR = `#tabelaDadosTurma tbody tr:nth-child(${indiceMateria + 1}) .icone-tabela-visualizar`;
-    
+
                     console.log(`Indo para página de materia`);
                     await navegarParaUrl(page, url);
-                    await page.waitForSelector(MATERIA_SELECTOR);
-
-                    console.log(`Selecionando materia de ${aula.materia}`);
     
-                    const resultadoSelecionarMateria = await selecionarMateria(page, MATERIA_SELECTOR);
-                    if (!resultadoSelecionarMateria.sucesso) {
-                        console.warn(`Erro ao selecionar materia - Detalhe do erro:`, resultadoSelecionarMateria.mensagem);
-                        throw new Error(resultadoSelecionarMateria.mensagem);
-                    }
-    
-                    await sleep(2000);
-                    
-                    console.log(`Adicionando aula de ${aula.materia} - ${aula.dia}`);
-    
-                    console.log(`Selecionando bimestre ${bimestre}`);
-                    await selecionarBimestre(page, bimestre);
-                    
-                    console.log(`Selecionando data ${aula.dia}`);
-                    const dataAtiva = await selecionandoData(page, aula.dia, "aula", {
-                        DATE_SELECTOR: ``,
-                        DATE_TD_SELECTOR: ``,
-                        DATEPICKER_SELECTOR: ".datepicker"
-                    });
-                    if (!dataAtiva.sucesso) {
-                        console.warn(`Data inválida. Causa: ${dataAtiva.mensagem}`);
-
-                        if (dataAtiva.mensagem !== 'Data não encontrada!') {
-
-                            await sleep(2000);
-
-                            break;
-                        }
-
-                        throw new Error(dataAtiva.mensagem);
-                    }
-    
-                    await sleep(2000);
-    
-                    console.log(`Buscando horário(s)`);
-                    
-                    const horarios = await page.evaluate(() => {
-                        const elementos = document.querySelectorAll('#chHorario');
-                        const horarios: string[] = [];
-
-                        elementos.forEach((elemento) => {
-                            horarios.push((elemento as HTMLInputElement).value);
-                        })
-
-                        return horarios;
-                    })
-                    
-                    console.log("Selecionando exibição de 100 habilidades");
-                    await page.waitForSelector('select[name="tblHabilidadeFundamento_length"]');
-                    await page.select('select[name="tblHabilidadeFundamento_length"]', '100');
-                    
-                    console.log("Buscando habilidades");
-                    let habilidades = aula.habilidades;
-
-                    const codigosHabilidades: number[] = await page.evaluate((habilidades) => {
-                        const elementos = document.querySelectorAll('#tblHabilidadeFundamento tbody tr');
-
-                        return Array.from(elementos)
-                        .filter(elemento => habilidades.includes((elemento as HTMLElement).querySelector('td:nth-child(2)')?.textContent || ''))
-                        .map(elemento => {
-                            const input = (elemento as HTMLElement).querySelector('input[type="checkbox"]') as HTMLInputElement;
-                            return input ? parseInt(input.value) : null;
-                        })
-                        .filter(codigo => codigo !== null);
-                    }, habilidades);
-
-                    console.log("Buscando código da turma");
-
-                    const codigoDaTurma: number | null = await page.evaluate(() => {
-                        const input = document.querySelector('#hdCodigoTurma') as HTMLInputElement;
-                        return input ? parseInt(input.value) : null;
-                    })
-
-                    if (!codigoDaTurma) {
-                        throw new Error("Não foi possivel obter o código da turma");
-                    }
-
-                    console.log("Buscando código da disciplina");
-
-                    const codigoDaDisciplina: number | null = await page.evaluate(() => {
-                        const input = document.querySelector('#hdCodigoDisciplina') as HTMLInputElement;
-                        return input ? parseInt(input.value) : null;
-                    })
-
-                    if (!codigoDaDisciplina) {
-                        throw new Error("Não foi possivel obter o código da materia");
-                    }
-
-                    console.log("Buscando código da aula");
-
-                    const CodigoRegAula: string | null = await page.evaluate(() => {
-                        const input = document.querySelector('#hdCodigoRegAula') as HTMLInputElement;
-                        return input ? input.value : null;
-                    })
-
-                    if (!CodigoRegAula) {
-                        throw new Error("Não foi possivel obter o código da aula");
-                    }
-
                     console.log("Buscando token de autenticação");
-
+                    
                     const csrfToken = await page.evaluate(() => {
                         const tokenInput = document.querySelector<HTMLInputElement>('input[name="__RequestVerificationToken"]');
                         return tokenInput ? tokenInput.value : null;
                     });
-
+                    
                     if (!csrfToken) {
                         throw new Error('Erro: __RequestVerificationToken não encontrado na página. A automação pode falhar.');
                     }
-
+                    
                     const cookies = await browser.cookies();
                     const csrfCookie = cookies.find(cookie => cookie.name === '__RequestVerificationToken');
                     const csrfTokenFromCookie = csrfCookie ? csrfCookie.value : null;
-
+                    
+                    console.log(`CSRF Token (DOM): ${csrfToken}`);
+                    console.log(`CSRF Token (Cookie): ${csrfTokenFromCookie}`);
+                    
                     const csrfTokenToSend = csrfTokenFromCookie || csrfToken;
-
-                    console.log("Manipulando dados");
-
-                    const dataString = `${aula.dia.split('/').reverse().join('-')}T03:00:00.000Z`
-
-                    const payloadData = {
-                        "CodigoRegAula": CodigoRegAula,
-                        "Data": dataString,
-                        "Selecao": 
-                            codigosHabilidades ? codigosHabilidades.map(codigo => {
-                                return {
-                                    "Conteudo": codigo,
-                                    "Habilidade": codigo,
-                                    "Data": `/Date(${parseISO(dataString).getTime()})/`
-                                }
-                            }) : [],
-                        "SelecaoEixo": [],
-                        "Bimestre": bimestre,
-                        "Observacoes": "",
-                        "CodigoTurma": codigoDaTurma,
-                        "CodigoDisciplina": codigoDaDisciplina,
-                        "Horarios": horarios.join(','),
-                        "RecursosAula": {
-                            "Recursos": [],
-                            "Resumo": aula.descricao
-                        },
-                        "FlAprenderJunto": false,
-                        "Nr_Ra": "",
-                        "Nr_Dig_Ra": "",
-                        "Sg_Uf_Ra": "",
-                        "DsResumo": aula.descricao,
-                        "TarefasApiCm": []
-                    };
-
-                    const payload = JSON.stringify(payloadData);
-
+                    
                     const formData = new URLSearchParams();
                     formData.append('__RequestVerificationToken', csrfTokenToSend);
                     formData.append('str', payload);

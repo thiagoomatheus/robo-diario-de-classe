@@ -413,7 +413,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
     const logs: string[] = [];
     let mensagemFinal = "";
 
-    /* page.setRequestInterception(true);
+    page.setRequestInterception(true);
 
     page.on('request', async (request) => {
         if (request.url().includes('/RegistroAula/Salvar') && request.method() === 'POST') {
@@ -421,42 +421,14 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                 const originalPostData: any = request.postData(); // Isso pode ser um objeto, Buffer ou string
                 const originalHeaders = request.headers();
 
-                // MODIFICAÇÃO: Converta originalPostData para string se não for já
-                let postDataString: string;
-                if (originalPostData === undefined) {
-                    postDataString = '';
-                } else if (typeof originalPostData === 'string') {
-                    postDataString = originalPostData;
-                } else if (originalPostData instanceof Buffer) { // Pode ser um Buffer
-                    postDataString = originalPostData.toString('utf8');
-                } else { // Assumir que é um objeto com método toString(), como URLSearchParams
-                    postDataString = (originalPostData as any).toString();
-                }
-
                 // Agora, você pode logar a string corretamente
                 console.log("HEADERS ORIGINAIS DA REQUISIÇÃO INTERCEPTADA:", originalHeaders);
-                console.log("POSTDATA ORIGINAL DA REQUISIÇÃO INTERCEPTADA (string):", postDataString);
-
-
-                const params = new URLSearchParams(postDataString || ''); // Use a string convertida
-                let str = params.get('str');
+                console.log("POSTDATA ORIGINAL DA REQUISIÇÃO INTERCEPTADA (string):", originalPostData);
                 
-                if (str) {
-                    // Decodificar e parsear o JSON original do navegador
-                    let originalPayloadObject = JSON.parse(decodeURIComponent(str.replace(/\+/g, ' ')));
-
-                    // Re-stringificar o JSON modificado e URL-encode novamente
-                    const newStr = encodeURIComponent(JSON.stringify(originalPayloadObject));
-                    
-                    // Colocar o 'str' modificado de volta nos parâmetros
-                    params.set('str', newStr);
-
-                    // Reconstruir o corpo da requisição completo
-                    const newPostData = params.toString();
-
-                    await request.continue({ postData: newPostData, headers: originalHeaders });
+                if (originalPostData) {
+                    await request.continue({ postData: originalPostData, headers: originalHeaders });
                 } else {
-                    console.error("Parâmetro 'str' ou 'currentPayloadData' ausente na requisição de salvar aula. Abortando.");
+                    console.error("Body ausente na requisição de salvar aula. Abortando.");
                     await request.abort();
                 }
 
@@ -467,7 +439,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
         } else {
             await request.continue();
         }
-    }); */
+    });
 
     try {
         console.log(`Registrando aulas...`);
@@ -636,32 +608,6 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     const encodedPayload = encodeURIComponent(payload);
 
                     const formDataBodyString = `str=${encodedPayload}`;
-                    
-/*                     console.log("Buscando token de autenticação");
-
-                    console.log(`Indo para página de materia`);
-                    await navegarParaUrl(page, url);
-                    
-                    const csrfToken = await page.evaluate(() => {
-                        const tokenInput = document.querySelector<HTMLInputElement>('input[name="__RequestVerificationToken"]');
-                        return tokenInput ? tokenInput.value : null;
-                    });
-                    
-                    if (!csrfToken) {
-                        throw new Error('Erro: __RequestVerificationToken não encontrado na página. A automação pode falhar.');
-                    }
-                    
-                    const cookies = await browser.cookies();
-                    const csrfCookie = cookies.find(cookie => cookie.name === '__RequestVerificationToken');
-                    const csrfTokenFromCookie = csrfCookie ? csrfCookie.value : null;
-                    
-                    console.log(`CSRF Token (DOM): ${csrfToken}`);
-                    console.log(`CSRF Token (Cookie): ${csrfTokenFromCookie}`);
-                    
-                    const csrfTokenToSend = csrfTokenFromCookie || csrfToken;
-                    
-                    const formData = new URLSearchParams();
-                    formData.append('str', payload); */
 
                     console.log('Enviando requisição POST...');
                     
@@ -684,16 +630,16 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             credentials: 'include'
                         });
 
-                        const contentType = response.headers.get('content-type');
+                        /* const contentType = response.headers.get('content-type');
                         if (contentType && contentType.includes('application/json')) {
                             console.log(response.status);
                             return response.json();
                         } else {
                             console.log(response.status);
                             return response.text();
-                        }
+                        } */
 
-                        /* const jsonResponse: ResponsePostSalvarAula = await response.json();
+                        const jsonResponse: ResponsePostSalvarAula = await response.json();
 
                         console.log(jsonResponse);
 
@@ -701,7 +647,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                             throw new Error(`Requisição POST falhou: ${jsonResponse.Erro}`);
                         }
                         
-                        return jsonResponse.Sucesso; */
+                        return jsonResponse.Sucesso;
                     }, formDataBodyString, currentPageUrl, new URL(currentPageUrl).origin);
 
                     console.log('Requisição POST enviada com sucesso!');

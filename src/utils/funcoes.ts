@@ -30,31 +30,34 @@ export const iniciarNavegacao = async () => {
 
 export const fazerLogin = async (page: Page, login: string, password: string) => {
 
-    try {
+  try {
 
-        console.log("Logando...");
+    console.log("Logando...");
 
-        await page.type(LOGIN_SELECTOR, login);
-        
-        await page.type(PASSWORD_SELECTOR, password);
-        
-        await page.click(BUTTON_SELECTOR);
+    await page.type(LOGIN_SELECTOR, login);
+    
+    await page.type(PASSWORD_SELECTOR, password);
+    
+    await page.click(BUTTON_SELECTOR);
 
-        await page.waitForNavigation();
-        
-    } catch (error) {
-      console.error(`Erro ao fazer login - Detalhe do erro:`, error);
-
-      return {
-        sucesso: false,
-        mensagem: `Erro ao fazer login - Detalhe do erro: ${error}`
-      }
-    }
+    await page.waitForNavigation({
+      waitUntil: 'networkidle0',
+      timeout: 10000
+    });
+      
+  } catch (error) {
+    console.error(`Erro ao fazer login - Detalhe do erro:`, error);
 
     return {
-        sucesso: true,
-        mensagem: "Login realizado com sucesso - " + login
+      sucesso: false,
+      mensagem: `Erro ao fazer login - Detalhe do erro: ${error}`
     }
+  }
+
+  return {
+    sucesso: true,
+    mensagem: "Login realizado com sucesso - " + login
+  }
 }
 
 export const navegarParaUrl = async (page: Page, url: string) => {
@@ -83,101 +86,99 @@ export const navegarParaUrl = async (page: Page, url: string) => {
 
 export async function iniciar(config: ConfigIniciar) {
 
-    const { login, password, url } = config;
+  const { login, password, url } = config;
 
-    console.log("Iniciando");
+  console.log("Iniciando");
 
-    let browser: Browser | null = null;
-    
-    let page: Page | null = null;
-    
-    try {
-        const resultado = await iniciarNavegacao();
-    
-        browser = resultado.browser;
-    
-        page = resultado.page;
-    } catch (error) {
-        
-        console.warn("Erro ao iniciar navegador: " + error);
-    
-        return {
-            sucesso: false,
-            mensagem: "Erro ao iniciar navegador: " + error
-        }
-    }
+  let browser: Browser | null = null;
+  
+  let page: Page | null = null;
+  
+  try {
+    const resultado = await iniciarNavegacao();
 
-    const resultadoNavegarHome = await navegarParaUrl(page, 'https://sed.educacao.sp.gov.br/');
+    browser = resultado.browser;
 
-    if (!resultadoNavegarHome.sucesso) {
-
-      return {
-        sucesso: false,
-        mensagem: "Erro ao navegar para https://sed.educacao.sp.gov.br/ - Detalhe do erro: " + resultadoNavegarHome.mensagem
-      }
-    }
-      
-    const resultadoLogin = await fazerLogin(page, login, password);
-
-    if (!resultadoLogin.sucesso) {
-
-      return {
-        sucesso: false,
-        mensagem: "Erro ao fazer login - Detalhe do erro: " + resultadoLogin.mensagem
-      }
-    }
-
-    const resultadoNavegarUrl = await navegarParaUrl(page, url);
-
-    if (!resultadoNavegarUrl.sucesso) {
-
-        return {
-            sucesso: false,
-            mensagem: "Erro ao navegar para https://sed.educacao.sp.gov.br/ - Detalhe do erro: " + resultadoNavegarUrl.mensagem
-        }
-    }
-
+    page = resultado.page;
+  } catch (error) {
+    console.warn("Erro ao iniciar navegador: " + error);
     return {
-        sucesso: true,
-        mensagem: `Navegado para: ${url}`,
-        page,
-        browser
+      sucesso: false,
+      mensagem: "Erro ao iniciar navegador. Tente novamente mais tarde"
     }
+  }
+
+  const resultadoNavegarHome = await navegarParaUrl(page, 'https://sed.educacao.sp.gov.br/');
+
+  if (!resultadoNavegarHome.sucesso) {
+    console.warn("Erro ao navegar para https://sed.educacao.sp.gov.br/ - Detalhe do erro: " + resultadoNavegarHome.mensagem);
+    return {
+      sucesso: false,
+      mensagem: "Erro ao navegar para https://sed.educacao.sp.gov.br/. Tente novamente mais tarde"
+    }
+  }
+    
+  const resultadoLogin = await fazerLogin(page, login, password);
+
+  if (!resultadoLogin.sucesso) {
+    console.warn("Erro ao fazer login. - " + resultadoLogin.mensagem);
+    return {
+      sucesso: false,
+      mensagem: "Erro ao fazer login. Tente novamente mais tarde"
+    }
+  }
+
+  const resultadoNavegarUrl = await navegarParaUrl(page, url);
+
+  if (!resultadoNavegarUrl.sucesso) {
+    console.warn(`Erro ao navegar para ${url} - Detalhe do erro: " + resultadoNavegarUrl.mensagem`);
+    return {
+      sucesso: false,
+      mensagem: `Erro ao navegar para ${url}. Tente novamente mais tarde`
+    }
+  }
+
+  return {
+    sucesso: true,
+    mensagem: `Navegado para: ${url}`,
+    page,
+    browser
+  }
     
 }
 
 export const clickComEvaluate = async (page: Page, seletor: string) => {
 
-    await page.evaluate((seletor) => {
-      const elemento = document.querySelector(seletor) as HTMLElement;
+  await page.evaluate((seletor) => {
+    const elemento = document.querySelector(seletor) as HTMLElement;
 
-      elemento.click()
-    }, seletor);
+    elemento.click()
+  }, seletor);
 
 }
 
 export const selecionarMateria = async (page: Page, seletor: string) => {
 
-    try {
+  try {
+      
+    await page.waitForSelector(seletor);
         
-        await page.waitForSelector(seletor);
-            
-        await clickComEvaluate(page, seletor);
-    
-        console.log(`Indo para página de matéria`);
-    } catch (error) {
+    await clickComEvaluate(page, seletor);
 
-        console.error(`Erro ao selecionar matéria - Detalhe do erro:`, error);
-        return {
-            sucesso: false,
-            mensagem: `Erro ao selecionar matéria - Detalhe do erro: ${error}`
-        }
-    }
+    console.log(`Indo para página de matéria`);
+  } catch (error) {
 
+    console.error(`Erro ao selecionar matéria - Detalhe do erro:`, error);
     return {
-        sucesso: true,
-        mensagem: `Indo para página de matéria`
+      sucesso: false,
+      mensagem: `Erro ao selecionar matéria - Detalhe do erro: ${error}`
     }
+  }
+
+  return {
+    sucesso: true,
+    mensagem: `Indo para página de matéria`
+  }
 
 };
 
@@ -186,12 +187,12 @@ export function sleep(ms: number) {
 }
 
 export const selecionandoData = async (page: Page, data: string, tipo: "frequencia" | "aula", seletores: {
-    DATE_TD_SELECTOR: string,
-    DATE_SELECTOR: string,
-    DATEPICKER_SELECTOR: string
+  DATE_TD_SELECTOR: string,
+  DATE_SELECTOR: string,
+  DATEPICKER_SELECTOR: string
 }) => {
 
-  const { DATEPICKER_SELECTOR, DATE_SELECTOR, DATE_TD_SELECTOR } = seletores;
+  const { DATE_SELECTOR, DATE_TD_SELECTOR } = seletores;
 
   const dataEmFormatoCorreto: Date = parse(data, 'dd/MM/yyyy', new Date());
 

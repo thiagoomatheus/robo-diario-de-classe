@@ -206,11 +206,6 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
     
     await page.evaluate(async () => {
 
-      /* const elemento = document.querySelector(DATEPICKER_SELECTOR) as HTMLElement;
-
-      elemento.style.display = 'block';
-      elemento.style.zIndex = '9999'; */
-
       const icone = document.querySelector('.calendar-icon') as HTMLElement;
 
       icone.click(); 

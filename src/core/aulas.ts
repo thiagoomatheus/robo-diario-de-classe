@@ -552,6 +552,14 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                         throw new Error('Erro: __RequestVerificationToken não encontrado na página. A automação pode falhar.');
                     }
 
+                    const cookies = await browser.cookies(); // Obter cookies para o domínio relevante
+                    const csrfCookie = cookies.find(cookie => cookie.name === '__RequestVerificationToken');
+                    const csrfTokenFromCookie = csrfCookie ? csrfCookie.value : null;
+
+                    // 3. Logar e comparar os dois valores
+                    console.log(`CSRF Token (DOM): ${csrfToken}`);
+                    console.log(`CSRF Token (Cookie): ${csrfTokenFromCookie}`);
+
                     console.log("Manipulando dados");
 
                     const dataString = `${aula.dia.split('/').reverse().join('-')}T03:00:00.000Z`

@@ -2,6 +2,7 @@ import { Page } from "puppeteer"
 import { abrindoSeletorHorario, clickComEvaluate, iniciar, navegarParaUrl, selecionandoData, selecionandoHorario, selecionarBimestre, selecionarMateria, sleep } from "../utils/funcoes"
 import { analisePorCronograma } from "../utils/ia"
 import { parseISO } from "date-fns"
+import { URL } from "node:url"
 
 type ConfigAula = {
     login: string
@@ -606,7 +607,9 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     
                     console.log(formData.toString());
 
-                    const responseData = await page.evaluate(async (formData) => {
+                    const currentPageUrl = page.url();
+
+                    const responseData = await page.evaluate(async (formData, urlReferer, urlOrigin) => {
 
                         const response = await fetch('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', {
                             method: 'POST',
@@ -614,6 +617,9 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                                 'Accept': 'application/json, text/javascript, */*; q=0.01',
                                 'X-Requested-With': 'XMLHttpRequest',
+                                'Referer': urlReferer,
+                                'Origin': urlOrigin,
+                                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36',
                             },
                             body: formData.toString(),
                         });
@@ -636,7 +642,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                         }
                         
                         return jsonResponse.Sucesso; */
-                    }, formData);
+                    }, formData, currentPageUrl, new URL(currentPageUrl).origin);
 
                     console.log('Requisição POST enviada com sucesso!');
                     console.log(`Resposta do servidor: ${responseData}`);

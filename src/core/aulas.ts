@@ -417,56 +417,56 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
 
     page.on('request', async (request) => {
         if (request.url().includes('/RegistroAula/Salvar') && request.method() === 'POST') {
-        try {
-            const originalPostData: any = request.postData(); // Isso pode ser um objeto, Buffer ou string
-            const originalHeaders = request.headers();
+            try {
+                const originalPostData: any = request.postData(); // Isso pode ser um objeto, Buffer ou string
+                const originalHeaders = request.headers();
 
-            // MODIFICAÇÃO: Converta originalPostData para string se não for já
-            let postDataString: string;
-            if (originalPostData === undefined) {
-                postDataString = '';
-            } else if (typeof originalPostData === 'string') {
-                postDataString = originalPostData;
-            } else if (originalPostData instanceof Buffer) { // Pode ser um Buffer
-                postDataString = originalPostData.toString('utf8');
-            } else { // Assumir que é um objeto com método toString(), como URLSearchParams
-                postDataString = (originalPostData as any).toString();
-            }
+                // MODIFICAÇÃO: Converta originalPostData para string se não for já
+                let postDataString: string;
+                if (originalPostData === undefined) {
+                    postDataString = '';
+                } else if (typeof originalPostData === 'string') {
+                    postDataString = originalPostData;
+                } else if (originalPostData instanceof Buffer) { // Pode ser um Buffer
+                    postDataString = originalPostData.toString('utf8');
+                } else { // Assumir que é um objeto com método toString(), como URLSearchParams
+                    postDataString = (originalPostData as any).toString();
+                }
 
-            // Agora, você pode logar a string corretamente
-            console.log("HEADERS ORIGINAIS DA REQUISIÇÃO INTERCEPTADA:", originalHeaders);
-            console.log("POSTDATA ORIGINAL DA REQUISIÇÃO INTERCEPTADA (string):", postDataString);
+                // Agora, você pode logar a string corretamente
+                console.log("HEADERS ORIGINAIS DA REQUISIÇÃO INTERCEPTADA:", originalHeaders);
+                console.log("POSTDATA ORIGINAL DA REQUISIÇÃO INTERCEPTADA (string):", postDataString);
 
 
-            const params = new URLSearchParams(postDataString || ''); // Use a string convertida
-            let str = params.get('str');
-            
-            if (str) {
-                // Decodificar e parsear o JSON original do navegador
-                let originalPayloadObject = JSON.parse(decodeURIComponent(str.replace(/\+/g, ' ')));
-
-                // Re-stringificar o JSON modificado e URL-encode novamente
-                const newStr = encodeURIComponent(JSON.stringify(originalPayloadObject));
+                const params = new URLSearchParams(postDataString || ''); // Use a string convertida
+                let str = params.get('str');
                 
-                // Colocar o 'str' modificado de volta nos parâmetros
-                params.set('str', newStr);
+                if (str) {
+                    // Decodificar e parsear o JSON original do navegador
+                    let originalPayloadObject = JSON.parse(decodeURIComponent(str.replace(/\+/g, ' ')));
 
-                // Reconstruir o corpo da requisição completo
-                const newPostData = params.toString();
+                    // Re-stringificar o JSON modificado e URL-encode novamente
+                    const newStr = encodeURIComponent(JSON.stringify(originalPayloadObject));
+                    
+                    // Colocar o 'str' modificado de volta nos parâmetros
+                    params.set('str', newStr);
 
-                await request.continue({ postData: newPostData, headers: originalHeaders });
-            } else {
-                console.error("Parâmetro 'str' ou 'currentPayloadData' ausente na requisição de salvar aula. Abortando.");
+                    // Reconstruir o corpo da requisição completo
+                    const newPostData = params.toString();
+
+                    await request.continue({ postData: newPostData, headers: originalHeaders });
+                } else {
+                    console.error("Parâmetro 'str' ou 'currentPayloadData' ausente na requisição de salvar aula. Abortando.");
+                    await request.abort();
+                }
+
+            } catch (error: any) {
+                console.error(`Erro ao interceptar e modificar requisição POST de salvar aula: ${error.message || error}`);
                 await request.abort();
             }
-
-        } catch (error: any) {
-            console.error(`Erro ao interceptar e modificar requisição POST de salvar aula: ${error.message || error}`);
-            await request.abort();
+        } else {
+            await request.continue();
         }
-    } else {
-        await request.continue();
-    }
     });
 
     try {
@@ -632,8 +632,12 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     };
 
                     const payload = JSON.stringify(payloadData);
+
+                    const encodedPayload = encodeURIComponent(payload);
+
+                    const formDataBodyString = `str=${encodedPayload}`;
                     
-                    console.log("Buscando token de autenticação");
+/*                     console.log("Buscando token de autenticação");
 
                     console.log(`Indo para página de materia`);
                     await navegarParaUrl(page, url);
@@ -657,15 +661,15 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     const csrfTokenToSend = csrfTokenFromCookie || csrfToken;
                     
                     const formData = new URLSearchParams();
-                    formData.append('str', payload);
+                    formData.append('str', payload); */
 
                     console.log('Enviando requisição POST...');
                     
-                    console.log(formData.toString());
+                    console.log(formDataBodyString);
 
                     const currentPageUrl = page.url();
 
-                    const responseData = await page.evaluate(async (formData, urlReferer, urlOrigin) => {
+                    const responseData = await page.evaluate(async (formDataBodyString, urlReferer, urlOrigin) => {
 
                         const response = await fetch('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', {
                             method: 'POST',
@@ -676,7 +680,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                                 'Referer': urlReferer,
                                 'Origin': urlOrigin,
                             },
-                            body: formData.toString(),
+                            body: formDataBodyString,
                             credentials: 'include'
                         });
 
@@ -698,7 +702,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                         }
                         
                         return jsonResponse.Sucesso; */
-                    }, formData, currentPageUrl, new URL(currentPageUrl).origin);
+                    }, formDataBodyString, currentPageUrl, new URL(currentPageUrl).origin);
 
                     console.log('Requisição POST enviada com sucesso!');
                     console.log(`Resposta do servidor: ${responseData}`);

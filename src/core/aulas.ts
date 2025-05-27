@@ -630,7 +630,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
 
                     const currentPageUrl = page.url();
 
-                    const responseData = await page.evaluate(async (payload, urlReferer, urlOrigin) => {
+                    const responseData = await page.evaluate(async (formData, urlReferer, urlOrigin) => {
 
                         const response = await fetch('https://sed.educacao.sp.gov.br/RegistroAula/Salvar', {
                             method: 'POST',
@@ -642,7 +642,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                                 'Origin': urlOrigin,
                                 'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36',
                             },
-                            body: encodeURIComponent(JSON.stringify(payload)),
+                            body: encodeURIComponent(JSON.stringify(formData)),
                             credentials: 'include'
                         });
 
@@ -664,7 +664,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                         }
                         
                         return jsonResponse.Sucesso; */
-                    }, payload, currentPageUrl, new URL(currentPageUrl).origin);
+                    }, formData, currentPageUrl, new URL(currentPageUrl).origin);
 
                     console.log('Requisição POST enviada com sucesso!');
                     console.log(`Resposta do servidor: ${responseData}`);

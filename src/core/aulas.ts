@@ -413,6 +413,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
     const logs: string[] = [];
     let mensagemFinal = "";
 
+    page.setRequestInterception(true);
+
     page.on('request', async (request) => {
         if (request.url().includes('/RegistroAula/Salvar') && request.method() === 'POST') {
             try {
@@ -705,6 +707,8 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
         console.log(`Falhas: ${falhaCount}`);
         console.log(`Mensagem: ${mensagemFinal}`);
         console.log(`---------------------`);
+
+        page.setRequestInterception(false);
     
     } catch (error) {
         console.error(`Erro fatal ao iterar sobre aulas ou iniciar o processo:`, error);

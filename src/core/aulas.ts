@@ -642,7 +642,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                                 'Origin': urlOrigin,
                                 'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36',
                             },
-                            body: formData.toString(),
+                            body: encodeURIComponent(JSON.stringify(payload)),
                             credentials: 'include'
                         });
 

@@ -413,7 +413,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
     const logs: string[] = [];
     let mensagemFinal = "";
 
-    page.setRequestInterception(true);
+    /* page.setRequestInterception(true);
 
     page.on('request', async (request) => {
         if (request.url().includes('/RegistroAula/Salvar') && request.method() === 'POST') {
@@ -467,7 +467,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
         } else {
             await request.continue();
         }
-    });
+    }); */
 
     try {
         console.log(`Registrando aulas...`);

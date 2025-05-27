@@ -413,6 +413,25 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
     const logs: string[] = [];
     let mensagemFinal = "";
 
+    page.on('request', async (request) => {
+        if (request.url().includes('/RegistroAula/Salvar') && request.method() === 'POST') {
+            try {
+                // Capturar os dados originais que o clique no botão geraria
+                const originalPostData = request.postData();
+                const originalHeaders = request.headers();
+
+                console.log(originalHeaders);
+                console.log(originalPostData);
+
+                await request.continue();
+            } catch (error) {
+                console.error(`Erro ao capturar os dados originais:`, error);
+            }
+        } else {
+            await request.continue();
+        }
+    });
+
     try {
         console.log(`Registrando aulas...`);
     

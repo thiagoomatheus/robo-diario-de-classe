@@ -471,7 +471,7 @@ export default async function routes(app: FastifyTypedInstance) {
       
     try {
   
-      const resultado = await registrarAulaViaRequestTeste({
+      const resultado = await registrarAulaViaRequest({
         login: usuario.login,
         password: senha,
         linkCronograma,

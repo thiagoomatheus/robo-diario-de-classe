@@ -576,7 +576,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                 payload = JSON.stringify(payloadData);
 
             } catch (error) {
-                
+                throw error;
             }
 
             while (tentativa < maximoTentativas && !aulaRegistrada) {

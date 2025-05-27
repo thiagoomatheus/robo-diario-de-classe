@@ -617,8 +617,6 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     const formDataBodyString = `str=${encodedPayload}`;
 
                     console.log('Enviando requisição POST...');
-                    
-                    console.log(formDataBodyString);
 
                     const currentPageUrl = page.url();
 

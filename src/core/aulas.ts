@@ -521,8 +521,7 @@ export async function registrarAulaViaRequest(config: ConfigAula) {
                     })
 
                     if (horarios.length === 0) {
-                        console.warn(`Nenhum horário encontrado para a data ${aula.dia}`);
-                        break;
+                        throw new Error(`Nenhum horário encontrado para a data ${aula.dia}`);
                     }
                     
                     console.log("Selecionando exibição de 100 habilidades");

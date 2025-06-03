@@ -30,27 +30,43 @@ export const iniciarNavegacao = async () => {
 
 export const fazerLogin = async (page: Page, login: string, password: string) => {
 
-  try {
+  let logado = false;
 
-    console.log("Logando...");
+  let tentativa = 0;
 
-    await page.type(LOGIN_SELECTOR, login);
+  while (!logado && tentativa < 3) {
+
+    console.log(`Tentativa de login: ${tentativa}`);
     
-    await page.type(PASSWORD_SELECTOR, password);
-    
-    await page.click(BUTTON_SELECTOR);
-
-    await page.waitForNavigation({
-      waitUntil: 'networkidle0',
-      timeout: 30000
-    });
+    try {
+  
+      console.log("Logando...");
+  
+      await page.type(LOGIN_SELECTOR, login);
       
-  } catch (error) {
-    console.error(`Erro ao fazer login - Detalhe do erro:`, error);
+      await page.type(PASSWORD_SELECTOR, password);
+      
+      await page.click(BUTTON_SELECTOR);
+  
+      await page.waitForNavigation({
+        waitUntil: 'networkidle0',
+        timeout: 30000
+      });
 
+      logado = true;
+        
+    } catch (error) {
+      console.error(`Erro ao fazer login na tentativa ${tentativa} - Detalhe do erro:`, error);
+      logado = false;
+      tentativa++;
+    }
+
+  }
+
+  if (!logado) {
     return {
       sucesso: false,
-      mensagem: `Erro ao fazer login - Detalhe do erro: ${error}`
+      mensagem: `Erro ao fazer login! Por favor, tente novamente mais tarde.`
     }
   }
 
@@ -242,6 +258,8 @@ export const selecionandoData = async (page: Page, data: string, tipo: "frequenc
       await clickComEvaluate(page, ANTERIOR_SELECTOR);
   
       console.log("Selecionado mês correto");
+
+      sleep(500);
       
     } catch (error) {
       console.error(`Erro ao selecionar mês correto - Detalhe do erro:`, error);
